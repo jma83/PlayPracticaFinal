@@ -1,0 +1,9 @@
+@(recipeBook: RecipeBook)
+
+<recipeBook>
+    <name>Ensalada césar</name>
+    <ingredientes>Lechuga</ingredientes>
+    @if(true){
+    <veganos/>
+    }
+</recipeBook>

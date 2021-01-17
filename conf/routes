@@ -1,0 +1,28 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+
+POST /user controllers.UserController.createUser(request: Request)
+GET /user controllers.UserController.getUser(request: Request)
+# PUT /user controllers.UserController.updateUser(index: Integer,request: Request)
+# DELETE /user controllers.UserController.deleteUser(index: Integer)
+
+POST /recipe controllers.RecipeController.createRecipe(request: Request)
+GET /recipe controllers.RecipeController.getRecipe(request: Request)
+# PUT /recipe controllers.RecipeController.updateRecipe(index: Integer,request: Request)
+# DELETE /recipe controllers.RecipeController.deleteRecipe(index: Integer)
+
+POST /ingredient controllers.IngredientController.createIngredient(request: Request)
+GET /ingredient controllers.IngredientController.getIngredient(request: Request)
+# PUT /ingredient controllers.IngredientController.updateIngredient(index: Integer,request: Request)
+# DELETE /ingredient controllers.IngredientController.deleteIngredient(index: Integer)
+
+POST /recipeBook controllers.RecipeBookController.createRecipeBook(request: Request)
+GET /recipeBook controllers.RecipeBookController.getRecipeBook(request: Request)
+# PUT /recipeBook controllers.RecipeBookController.updateRecipeBook(index: Integer,request: Request)
+# DELETE /recipeBook controllers.RecipeBookController.deleteRecipeBook(index: Integer)
+
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.versioned(file)

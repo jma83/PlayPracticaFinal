@@ -1,0 +1,8 @@
+@(ingredient: Ingredient)
+
+<ingredient>
+    <name>Lechuga</name>
+    @if(true){
+    <veganos/>
+    }
+</ingredient>

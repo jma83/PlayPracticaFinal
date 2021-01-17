@@ -1,0 +1,7 @@
+@(recipeBooks: List[RecipeBook])
+<?xml version="1.0" encoding="utf-8" ?>
+<recipeBooks>
+    @for(r <- recipeBooks){
+        @_recipeBook(r)
+    }
+</recipeBooks>
