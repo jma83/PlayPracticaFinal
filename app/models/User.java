@@ -1,5 +1,6 @@
 package models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import play.data.validation.Constraints.*;
 
 import io.ebean.Finder;
@@ -8,8 +9,9 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
+
 
 @Entity
 public class User extends BaseModel {
@@ -19,12 +21,16 @@ public class User extends BaseModel {
     @Email
     String email;
     @Required
-    Timestamp birthdate;
+    Date birthdate;
     @Required
     Integer age;
+    @JsonIgnore
     String country = null;
+    @JsonIgnore
     String language = null;
-    String password;
+    @JsonIgnore
+    String password = null;
+    @JsonIgnore
     Integer privilege = 0;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
@@ -46,7 +52,7 @@ public class User extends BaseModel {
         super();
     }
 
-    public User(String username,String email,Timestamp birthdate, Integer age, String country, String language, Integer privilege){
+    public User(String username,String email,Date birthdate, Integer age, String country, String language, Integer privilege){
         super();
         this.username = username;
         this.email = email;
@@ -90,11 +96,11 @@ public class User extends BaseModel {
         this.email = email;
     }
 
-    public Timestamp getBirthdate() {
+    public Date getBirthdate() {
         return birthdate;
     }
 
-    public void setBirthdate(Timestamp birthdate) {
+    public void setBirthdate(Date birthdate) {
         this.birthdate = birthdate;
     }
 
