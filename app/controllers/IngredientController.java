@@ -15,90 +15,84 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-//FormFactory (solo post y get)
 public class IngredientController {
     @Inject
     FormFactory formFactory;
 
     List<Ingredient> ingredients = new ArrayList<>();
+    String noResults = "Sin resultados!";
+    String formatError = "Error formato no numerico";
+    String headerCount = "X-Ingredient-Count";
 
     public Result createIngredient(Http.Request request){
         Form<Ingredient> form = formFactory.form(Ingredient.class).bindFromRequest(request);
-        Ingredient i = form.get();
+        Ingredient ingredient = form.get();
         Result res = null;
-        //Map<String,String> map = form.rawData();
 
         if (form.hasErrors()){
             System.err.println(form.errorsAsJson());
             res = Results.badRequest(form.errorsAsJson());
         }
 
-
-        //insertar usuario
-        this.ingredients.add(i);
-
+        ingredient.save();
+        ingredients.add(ingredient);
+        System.out.println("Ingredient inserted: " + ingredient);
         if (res==null)
             res = this.contentNegotiation(request,this.ingredients);
 
-        return res.withHeader("X-User-Count","0");
+        return res.withHeader(headerCount,String.valueOf(ingredients.size()));
     }
 
     public Result getIngredient(Http.Request request){
         Result res = null;
+        Optional<String> index = request.queryString("index");
 
-        if (ingredients.size() == 0) {
-            res = Results.notFound("Sin resultados!");
-        }else {
+        ingredients = Ingredient.findAll();
+        if (ingredients.size() == 0)
+            res = Results.notFound(noResults);
 
-            Optional<String> index = request.queryString("index");
+        if (index.isPresent() && res==null)
+            res = this.getIndexIngredient(index.get());
 
-            if (index.isPresent()) {
-                System.out.println(index.get());
-                try {
-                    res = this.getConIndex(Integer.parseInt(index.get()),request);
-                } catch (NumberFormatException e) {
-                    System.err.println("Error formato no numerico");
-                    res = Results.badRequest("Error formato no numerico");
-
-                }
-            }
-            if (res == null)
-                res = this.contentNegotiation(request,this.ingredients);
-
-        }
+        if (res == null)
+            res = this.contentNegotiation(request,this.ingredients);
 
 
-        return res.withHeader("X-User-Count",String.valueOf(ingredients.size()));
+        return res.withHeader(headerCount,String.valueOf(ingredients.size()));
 
     }
 
-    public Result getConIndex(int in,Http.Request request){
+    public Result getIndexIngredient(String index){
         Result res = null;
-        if (in < 0 || ingredients.size() <= in){
-            res = Results.notFound("GET - Sin resultados");
-        }else if (ingredients.get(in) == null) {
-            res = Results.notFound("GET - Sin resultados");
-        }
 
-        if (res == null) {
-            List<Ingredient> ingr = new ArrayList<>();
-            ingr.add(this.ingredients.get(in));
-            res = this.contentNegotiation(request,ingr);
+        System.out.println(index);
+        ingredients.clear();
+        try {
+            Ingredient i = Ingredient.findById(Integer.parseInt(index));
+            if (i != null) {
+                ingredients.add(i);
+            }else{
+                res = Results.notFound(noResults);
+            }
+        } catch (NumberFormatException e) {
+            res = Results.badRequest(formatError);
         }
 
         return res;
     }
 
-    public Result contentNegotiation(Http.Request request,List<Ingredient> ingr){
+    public Result contentNegotiation(Http.Request request,List<Ingredient> ingredients){
         Result res = null;
         if (request.accepts("application/xml")){
-            Content content = views.xml.Ingredient.ingredients.render(ingr);
+            Content content = views.xml.Ingredient.ingredients.render(ingredients);
             res = Results.ok(content);
         }else if (request.accepts("application/json")) {
-            res = Results.ok(Json.toJson(ingr));
+            res = Results.ok(Json.toJson(ingredients));
         }else{
             res = Results.badRequest();
         }
+
+        this.ingredients.clear();
 
         return res;
     }

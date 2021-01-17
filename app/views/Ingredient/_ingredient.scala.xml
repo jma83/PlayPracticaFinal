@@ -1,8 +1,12 @@
 @(ingredient: Ingredient)
 
 <ingredient>
-    <name>Lechuga</name>
-    @if(true){
-    <veganos/>
+    <name>@ingredient.getName()</name>
+    <description>@ingredient.getDescription()</description>
+    <quantity>@ingredient.getQuantity()</quantity>
+    <measure>@ingredient.getMeasure()</measure>
+    @views.xml.common.tags(ingredient.getTagList())
+    @if(false){
+    <vegans/>
     }
 </ingredient>

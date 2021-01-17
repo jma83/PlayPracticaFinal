@@ -14,76 +14,67 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-//FormFactory (solo post y get)
 public class UserController {
     @Inject
     FormFactory formFactory;
 
     List<User> users = new ArrayList<>();
+    String noResults = "Sin resultados!";
+    String formatError = "Error formato no numerico";
+    String headerCount = "X-User-Count";
 
     public Result createUser(Http.Request request){
         Form<User> form = formFactory.form(User.class).bindFromRequest(request);
         User usu = form.get();
         Result res = null;
-        //Map<String,String> map = form.rawData();
 
         if (form.hasErrors()){
             System.err.println(form.errorsAsJson());
             res = Results.badRequest(form.errorsAsJson());
         }
 
-
-        //insertar usuario
-        this.users.add(usu);
-
-        System.out.println("Users: " + this.users);
+        usu.save();
+        users.add(usu);
+        System.out.println("User inserted: " + usu);
         if (res==null)
         res = this.contentNegotiation(request,this.users);
 
-        return res.withHeader("X-User-Count",String.valueOf(users.size()));
+        return res.withHeader(headerCount,String.valueOf(users.size()));
     }
 
     public Result getUser(Http.Request request){
         Result res = null;
+        Optional<String> index = request.queryString("index");
 
-        if (users.size() == 0) {
-            res = Results.notFound("Sin resultados!");
-        }else {
+        users = User.findAll();
+        if (users.size() == 0)
+            res = Results.notFound(noResults);
 
-            Optional<String> index = request.queryString("index");
+        if (index.isPresent() && res==null)
+            res = this.getIndexUser(index.get());
 
-            if (index.isPresent()) {
-                System.out.println(index.get());
-                try {
-                    res = this.getConIndex(Integer.parseInt(index.get()),request);
-                } catch (NumberFormatException e) {
-                    System.err.println("Error formato no numerico");
-                    res = Results.badRequest("Error formato no numerico");
-
-                }
-            }
-            if (res == null)
+        if (res == null)
             res = this.contentNegotiation(request,this.users);
 
-        }
 
-
-        return res.withHeader("X-User-Count",String.valueOf(users.size()));
+        return res.withHeader(headerCount,String.valueOf(users.size()));
 
     }
 
-    public Result getConIndex(int in,Http.Request request){
+    public Result getIndexUser(String index){
         Result res = null;
-        if (in < 0 || users.size() <= in){
-            res = Results.notFound("GET - Sin resultados");
-        }else if (users.get(in) == null) {
-            res = Results.notFound("GET - Sin resultados");
-        }
 
-        if (res == null) {
-            List<User> users = new ArrayList<>();
-            users.add(this.users.get(in));
-            res = this.contentNegotiation(request,users);
+        System.out.println(index);
+        users.clear();
+        try {
+            User u = User.findById(Integer.parseInt(index));
+            if (u != null) {
+                users.add(u);
+            }else{
+                res = Results.notFound(noResults);
+            }
+        } catch (NumberFormatException e) {
+            res = Results.badRequest(formatError);
         }
 
         return res;
@@ -99,6 +90,8 @@ public class UserController {
         }else{
             res = Results.badRequest();
         }
+
+        this.users.clear();
 
         return res;
     }

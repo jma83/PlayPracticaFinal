@@ -1,8 +1,13 @@
 @(recipe: Recipe)
 
 <recipe>
-    <name>Lechuga</name>
-    @if(true){
-    <veganos/>
+    <name>@recipe.getName()</name>
+    <description>@recipe.getDescription()</description>
+    <visibility>@recipe.getVisibility()</visibility>
+    @views.xml.common.tags(recipe.getTagList())
+    @views.xml.Ingredient.ingredients(recipe.getIngredientList())
+    <author>@recipe.getAuthor()</author>
+    @if(false){
+    <vegans/>
     }
 </recipe>

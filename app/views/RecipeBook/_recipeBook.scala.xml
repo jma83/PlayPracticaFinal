@@ -1,8 +1,10 @@
 @(recipeBook: RecipeBook)
 
 <recipeBook>
-    <name>Ensalada césar</name>
-    <ingredientes>Lechuga</ingredientes>
+    <name>@recipeBook.getName()</name>
+    <review>@recipeBook.getReview()</review>
+    @views.xml.Recipe.recipes(recipeBook.getRecipeList())
+    @views.xml.User._user(recipeBook.getAuthor())
     @if(true){
     <veganos/>
     }

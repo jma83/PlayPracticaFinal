@@ -1,9 +1,14 @@
 @(user: User)
 
 <user>
-    <nick>@user.getNick()</nick>
+    <name>@user.getUsername()</name>
+    <email>@user.getEmail()</email>
+    <birthdate>@user.getBirthdate()</birthdate>
     <age>@user.getAge()</age>
-    @if(user.getAge() != null && user.getAge() >= 10){
+    <country>@user.getCountry()</country>
+    <language>@user.getLanguage()</language>
+    <privilege>@user.getPrivilege()</privilege>
+    @if(user.getAge() != null && user.getAge() >= 18){
     <mayor_edad/>
     }
 </user>
