@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.Finder;
 import play.data.validation.Constraints.*;
 
@@ -31,10 +32,13 @@ public class Recipe extends BaseModel {
     String description;
     Boolean visibility = true;
     List<String> tagList = new ArrayList<>();
+    @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
     public List<Ingredient> ingredientList = new ArrayList<>();
+    @JsonIgnore
     @ManyToOne
     public User author = null;
+    @JsonIgnore
     @ManyToMany(mappedBy = "recipeList")
     public List<RecipeBook> recipeBookList = new ArrayList<>();
 

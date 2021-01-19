@@ -5,8 +5,8 @@
 
 POST /user controllers.UserController.createUser(request: Request)
 GET /user controllers.UserController.getUser(request: Request)
-# PUT /user controllers.UserController.updateUser(index: Integer,request: Request)
-# DELETE /user controllers.UserController.deleteUser(index: Integer)
+PUT /user controllers.UserController.updateUser(request: Request)
+DELETE /user controllers.UserController.deleteUser(request: Request)
 
 POST /recipe controllers.RecipeController.createRecipe(request: Request)
 GET /recipe controllers.RecipeController.getRecipe(request: Request)

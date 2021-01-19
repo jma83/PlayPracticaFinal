@@ -1,6 +1,7 @@
 package models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.springframework.format.annotation.DateTimeFormat;
 import play.data.validation.Constraints.*;
 
 import io.ebean.Finder;
@@ -9,6 +10,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -24,21 +26,19 @@ public class User extends BaseModel {
     Date birthdate;
     @Required
     Integer age;
-    @JsonIgnore
     String country = null;
-    @JsonIgnore
     String language = null;
-    @JsonIgnore
     String password = null;
-    @JsonIgnore
     Integer privilege = 0;
 
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
-    public List<Recipe> recipeList;
+    public List<Recipe> recipeList = new ArrayList<>();
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL)
     public RecipeBook recipeBook;
 
-
+    @JsonIgnore
     public static final Finder<Long,User> find = new Finder<>(User.class);
 
     public static List<User> findAll(){

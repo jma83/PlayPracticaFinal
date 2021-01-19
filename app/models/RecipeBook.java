@@ -1,5 +1,6 @@
 package models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.Finder;
 import play.data.validation.Constraints;
 
@@ -22,8 +23,10 @@ public class RecipeBook extends BaseModel{
     String name;
     @Constraints.Required
     String review;
+    @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
     List<Recipe> recipeList = new ArrayList<>();
+    @JsonIgnore
     @OneToOne(mappedBy = "recipeBook")
     public User author = null;
 
