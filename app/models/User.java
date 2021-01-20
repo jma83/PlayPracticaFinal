@@ -112,6 +112,16 @@ public class User extends BaseModel {
         this.age = age;
     }
 
+    public void updateUser(User u){
+        this.setAge(u.getAge());
+        this.setBirthdate(u.getBirthdate());
+        this.setCountry(u.getCountry());
+        this.setEmail(u.getEmail());
+        this.setLanguage(u.getLanguage());
+        this.setPrivilege(u.getPrivilege());
+        this.setUsername(u.getUsername());
+    }
+
     public String getCountry() {
         return country;
     }

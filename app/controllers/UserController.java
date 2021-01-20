@@ -88,27 +88,19 @@ public class UserController {
         Result res = null;
         Form<User> form = formFactory.form(User.class).bindFromRequest(request);
         Optional<String> index = request.queryString("index");
-        User usu = form.get();
+        User user = form.get();
         if (form.hasErrors()){
             System.err.println(form.errorsAsJson());
             res = Results.badRequest(form.errorsAsJson());
         }
-        if (usu != null && res == null && index.isPresent()){
+        if (user != null && res == null && index.isPresent()){
             Long id = Long.valueOf(index.get());
-            User usuFinal = User.findById(id);
-            usuFinal.setAge(usu.getAge());
-            usuFinal.setBirthdate(usu.getBirthdate());
-            usuFinal.setCountry(usu.getCountry());
-            usuFinal.setEmail(usu.getEmail());
-            usuFinal.setLanguage(usu.getLanguage());
-            usuFinal.setPrivilege(usu.getPrivilege());
-            usuFinal.setUsername(usu.getUsername());
-            this.users.add(usuFinal);
-            usuFinal.update();
+            User userUpdate = User.findById(id);
+            userUpdate.updateUser(user);
+            this.users.add(userUpdate);
+            userUpdate.update();
             res = this.contentNegotiation(request,this.users);
         }
-
-
         return res.withHeader(headerCount,String.valueOf(users.size()));
     }
 
@@ -122,8 +114,6 @@ public class UserController {
             usuFinal.delete();
             res = this.contentNegotiation(request,this.users);
         }
-
-
         return res.withHeader(headerCount,String.valueOf(users.size()));
     }
 
@@ -137,10 +127,8 @@ public class UserController {
         }else if (request.accepts("application/json")) {
             ObjectMapper mapper = new ObjectMapper();
             try {
-
                 String result = mapper.writeValueAsString(users);
                 res = Results.ok(Json.parse(result));
-
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }

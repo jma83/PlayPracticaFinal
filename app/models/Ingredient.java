@@ -1,10 +1,12 @@
 package models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.Finder;
 import play.data.validation.Constraints.*;
 
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -25,8 +27,10 @@ public class Ingredient extends BaseModel {
     String description;
     Float quantity;
     String measure;
-    List<String> tagList;
+    @JsonIgnore
+    List<String> tagList = new ArrayList<>();
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "ingredientList")
     public List<Recipe> recipeList;
 
@@ -92,5 +96,13 @@ public class Ingredient extends BaseModel {
 
     public void setRecipeList(List<Recipe> recipeList) {
         this.recipeList = recipeList;
+    }
+
+    public void updateIngredient(Ingredient ingr){
+        this.name = ingr.getName();
+        this.description = ingr.getDescription();
+        this.quantity = ingr.getQuantity();
+        this.measure = ingr.getMeasure();
+        this.tagList = ingr.getTagList();
     }
 }

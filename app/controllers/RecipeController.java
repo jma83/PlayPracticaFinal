@@ -1,6 +1,9 @@
 package controllers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import models.Ingredient;
 import models.Recipe;
 import play.data.Form;
 import play.data.FormFactory;
@@ -81,13 +84,53 @@ public class RecipeController {
         return res;
     }
 
+    public Result updateRecipe(Http.Request request){
+        Result res = null;
+        Form<Recipe> form = formFactory.form(Recipe.class).bindFromRequest(request);
+        Optional<String> index = request.queryString("index");
+        Recipe recipe = form.get();
+        if (form.hasErrors()){
+            System.err.println(form.errorsAsJson());
+            res = Results.badRequest(form.errorsAsJson());
+        }
+        if (recipe != null && res == null && index.isPresent()){
+            Long id = Long.valueOf(index.get());
+            Recipe recipeUpdate = Recipe.findById(id);
+            recipeUpdate.updateRecipe(recipe);
+            this.recipes.add(recipe);
+            recipeUpdate.update();
+            res = this.contentNegotiation(request,this.recipes);
+        }
+        return res.withHeader(headerCount,String.valueOf(recipes.size()));
+    }
+
+    public Result deleteRecipe(Http.Request request){
+        Result res = null;
+        Optional<String> index = request.queryString("index");
+        if (index.isPresent()){
+            Long id = Long.valueOf(index.get());
+            Recipe recipeUpdate = Recipe.findById(id);
+            this.recipes.add(recipeUpdate);
+            recipeUpdate.delete();
+            res = this.contentNegotiation(request,this.recipes);
+        }
+        return res.withHeader(headerCount,String.valueOf(recipes.size()));
+    }
+
     public Result contentNegotiation(Http.Request request,List<Recipe> recipes){
         Result res = null;
         if (request.accepts("application/xml")){
             Content content = views.xml.Recipe.recipes.render(recipes);
             res = Results.ok(content);
         }else if (request.accepts("application/json")) {
-            res = Results.ok(Json.toJson(recipes));
+            //res = Results.ok(Json.toJson(recipes));
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                String result = mapper.writeValueAsString(recipes);
+                res = Results.ok(Json.parse(result));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
         }else{
             res = Results.badRequest();
         }

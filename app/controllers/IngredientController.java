@@ -1,7 +1,10 @@
 package controllers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import models.Ingredient;
+import models.User;
 import play.data.Form;
 import play.data.FormFactory;
 import play.libs.Json;
@@ -51,12 +54,17 @@ public class IngredientController {
         if (ingredients.size() == 0)
             res = Results.notFound(noResults);
 
-        if (index.isPresent() && res==null)
+        if (index.isPresent() && res==null) {
+            System.out.println("is present");
             res = this.getIndexIngredient(index.get());
+            System.out.println("is present 2");
+        }
 
         if (res == null)
             res = this.contentNegotiation(request,this.ingredients);
 
+        System.out.println("res " + res);
+        System.out.println("index.isPresent() " + index.isPresent());
 
         return res.withHeader(headerCount,String.valueOf(ingredients.size()));
 
@@ -72,13 +80,53 @@ public class IngredientController {
             if (i != null) {
                 ingredients.add(i);
             }else{
+                System.out.println("hola??");
                 res = Results.notFound(noResults);
             }
         } catch (NumberFormatException e) {
+            System.out.println("hola2??");
             res = Results.badRequest(formatError);
         }
-
+        System.out.println("res");
+        System.out.println(res);
         return res;
+    }
+
+    public Result updateIngredient(Http.Request request){
+        Result res = null;
+        Form<Ingredient> form = formFactory.form(Ingredient.class).bindFromRequest(request);
+        Optional<String> index = request.queryString("index");
+        Ingredient ingr = form.get();
+        if (form.hasErrors()){
+            System.err.println(form.errorsAsJson());
+            res = Results.badRequest(form.errorsAsJson());
+        }
+        if (ingr != null && res == null && index.isPresent()){
+            Long id = Long.valueOf(index.get());
+            Ingredient ingrUpdate = Ingredient.findById(id);
+            if (ingrUpdate!=null) {
+                ingrUpdate.updateIngredient(ingr);
+                this.ingredients.add(ingrUpdate);
+                ingrUpdate.update();
+            }else{
+                res = Results.notFound(noResults);
+            }
+            res = this.contentNegotiation(request,this.ingredients);
+        }
+        return res.withHeader(headerCount,String.valueOf(ingredients.size()));
+    }
+
+    public Result deleteIngredient(Http.Request request){
+        Result res = null;
+        Optional<String> index = request.queryString("index");
+        if (index.isPresent()){
+            Long id = Long.valueOf(index.get());
+            Ingredient ingrUpdate = Ingredient.findById(id);
+            this.ingredients.add(ingrUpdate);
+            ingrUpdate.delete();
+            res = this.contentNegotiation(request,this.ingredients);
+        }
+        return res.withHeader(headerCount,String.valueOf(ingredients.size()));
     }
 
     public Result contentNegotiation(Http.Request request,List<Ingredient> ingredients){
@@ -87,7 +135,15 @@ public class IngredientController {
             Content content = views.xml.Ingredient.ingredients.render(ingredients);
             res = Results.ok(content);
         }else if (request.accepts("application/json")) {
-            res = Results.ok(Json.toJson(ingredients));
+            //res = Results.ok(Json.toJson(ingredients));
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                String result = mapper.writeValueAsString(ingredients);
+                res = Results.ok(Json.parse(result));
+                System.out.println("Res " + res);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
         }else{
             res = Results.badRequest();
         }

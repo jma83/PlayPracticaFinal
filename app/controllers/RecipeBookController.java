@@ -1,6 +1,7 @@
 package controllers;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import models.Recipe;
 import models.RecipeBook;
 import play.data.Form;
 import play.data.FormFactory;
@@ -80,6 +81,39 @@ public class RecipeBookController {
         }
 
         return res;
+    }
+
+    public Result updateRecipeBook(Http.Request request){
+        Result res = null;
+        Form<RecipeBook> form = formFactory.form(RecipeBook.class).bindFromRequest(request);
+        Optional<String> index = request.queryString("index");
+        RecipeBook recipeBook = form.get();
+        if (form.hasErrors()){
+            System.err.println(form.errorsAsJson());
+            res = Results.badRequest(form.errorsAsJson());
+        }
+        if (recipeBook != null && res == null && index.isPresent()){
+            Long id = Long.valueOf(index.get());
+            RecipeBook recipeBookUpdate = RecipeBook.findById(id);
+            recipeBookUpdate.updateRecipeBook(recipeBook);
+            this.recipeBookList.add(recipeBookUpdate);
+            recipeBookUpdate.update();
+            res = this.contentNegotiation(request,this.recipeBookList);
+        }
+        return res.withHeader(headerCount,String.valueOf(recipeBookList.size()));
+    }
+
+    public Result deleteRecipeBook(Http.Request request){
+        Result res = null;
+        Optional<String> index = request.queryString("index");
+        if (index.isPresent()){
+            Long id = Long.valueOf(index.get());
+            RecipeBook recipeUpdate = RecipeBook.findById(id);
+            this.recipeBookList.add(recipeUpdate);
+            recipeUpdate.delete();
+            res = this.contentNegotiation(request,this.recipeBookList);
+        }
+        return res.withHeader(headerCount,String.valueOf(recipeBookList.size()));
     }
 
     public Result contentNegotiation(Http.Request request,List<RecipeBook> recipeBookList){
