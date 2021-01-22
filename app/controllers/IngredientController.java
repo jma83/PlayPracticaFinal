@@ -51,20 +51,20 @@ public class IngredientController {
         Optional<String> index = request.queryString("index");
 
         ingredients = Ingredient.findAll();
+
         if (ingredients.size() == 0)
             res = Results.notFound(noResults);
 
         if (index.isPresent() && res==null) {
-            System.out.println("is present");
+            System.out.println("index is present");
             res = this.getIndexIngredient(index.get());
-            System.out.println("is present 2");
+            System.out.println("index is present out");
+            System.out.println("Res: " + res);
+
         }
 
         if (res == null)
             res = this.contentNegotiation(request,this.ingredients);
-
-        System.out.println("res " + res);
-        System.out.println("index.isPresent() " + index.isPresent());
 
         return res.withHeader(headerCount,String.valueOf(ingredients.size()));
 
@@ -78,13 +78,14 @@ public class IngredientController {
         try {
             Ingredient i = Ingredient.findById(Integer.parseInt(index));
             if (i != null) {
+                System.out.println("Ingredient found!");
                 ingredients.add(i);
             }else{
-                System.out.println("hola??");
+                System.out.println("notFound");
                 res = Results.notFound(noResults);
             }
         } catch (NumberFormatException e) {
-            System.out.println("hola2??");
+            System.out.println("NumberFormatException");
             res = Results.badRequest(formatError);
         }
         System.out.println("res");
@@ -132,9 +133,12 @@ public class IngredientController {
     public Result contentNegotiation(Http.Request request,List<Ingredient> ingredients){
         Result res = null;
         if (request.accepts("application/xml")){
+            System.out.println("xml " + ingredients);
+
             Content content = views.xml.Ingredient.ingredients.render(ingredients);
             res = Results.ok(content);
         }else if (request.accepts("application/json")) {
+            System.out.println("json " + ingredients);
             //res = Results.ok(Json.toJson(ingredients));
             ObjectMapper mapper = new ObjectMapper();
             try {

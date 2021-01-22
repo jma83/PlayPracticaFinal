@@ -15,6 +15,12 @@ create table ingredient (
   constraint pk_ingredient primary key (id)
 );
 
+create table ingredient_tag (
+  ingredient_id                 bigint not null,
+  tag_id                        bigint not null,
+  constraint pk_ingredient_tag primary key (ingredient_id,tag_id)
+);
+
 create table recipe (
   id                            bigint auto_increment not null,
   name                          varchar(255),
@@ -25,6 +31,12 @@ create table recipe (
   when_created                  timestamp not null,
   when_updated                  timestamp not null,
   constraint pk_recipe primary key (id)
+);
+
+create table recipe_tag (
+  recipe_id                     bigint not null,
+  tag_id                        bigint not null,
+  constraint pk_recipe_tag primary key (recipe_id,tag_id)
 );
 
 create table recipe_ingredient (
@@ -49,6 +61,15 @@ create table recipe_book_recipe (
   constraint pk_recipe_book_recipe primary key (recipe_book_id,recipe_id)
 );
 
+create table tag (
+  id                            bigint auto_increment not null,
+  tag                           varchar(255),
+  version                       bigint not null,
+  when_created                  timestamp not null,
+  when_updated                  timestamp not null,
+  constraint pk_tag primary key (id)
+);
+
 create table user (
   id                            bigint auto_increment not null,
   username                      varchar(255),
@@ -67,8 +88,20 @@ create table user (
   constraint pk_user primary key (id)
 );
 
+create index ix_ingredient_tag_ingredient on ingredient_tag (ingredient_id);
+alter table ingredient_tag add constraint fk_ingredient_tag_ingredient foreign key (ingredient_id) references ingredient (id) on delete restrict on update restrict;
+
+create index ix_ingredient_tag_tag on ingredient_tag (tag_id);
+alter table ingredient_tag add constraint fk_ingredient_tag_tag foreign key (tag_id) references tag (id) on delete restrict on update restrict;
+
 create index ix_recipe_author_id on recipe (author_id);
 alter table recipe add constraint fk_recipe_author_id foreign key (author_id) references user (id) on delete restrict on update restrict;
+
+create index ix_recipe_tag_recipe on recipe_tag (recipe_id);
+alter table recipe_tag add constraint fk_recipe_tag_recipe foreign key (recipe_id) references recipe (id) on delete restrict on update restrict;
+
+create index ix_recipe_tag_tag on recipe_tag (tag_id);
+alter table recipe_tag add constraint fk_recipe_tag_tag foreign key (tag_id) references tag (id) on delete restrict on update restrict;
 
 create index ix_recipe_ingredient_recipe on recipe_ingredient (recipe_id);
 alter table recipe_ingredient add constraint fk_recipe_ingredient_recipe foreign key (recipe_id) references recipe (id) on delete restrict on update restrict;
@@ -87,8 +120,20 @@ alter table user add constraint fk_user_recipe_book_id foreign key (recipe_book_
 
 # --- !Downs
 
+alter table ingredient_tag drop constraint if exists fk_ingredient_tag_ingredient;
+drop index if exists ix_ingredient_tag_ingredient;
+
+alter table ingredient_tag drop constraint if exists fk_ingredient_tag_tag;
+drop index if exists ix_ingredient_tag_tag;
+
 alter table recipe drop constraint if exists fk_recipe_author_id;
 drop index if exists ix_recipe_author_id;
+
+alter table recipe_tag drop constraint if exists fk_recipe_tag_recipe;
+drop index if exists ix_recipe_tag_recipe;
+
+alter table recipe_tag drop constraint if exists fk_recipe_tag_tag;
+drop index if exists ix_recipe_tag_tag;
 
 alter table recipe_ingredient drop constraint if exists fk_recipe_ingredient_recipe;
 drop index if exists ix_recipe_ingredient_recipe;
@@ -106,13 +151,19 @@ alter table user drop constraint if exists fk_user_recipe_book_id;
 
 drop table if exists ingredient;
 
+drop table if exists ingredient_tag;
+
 drop table if exists recipe;
+
+drop table if exists recipe_tag;
 
 drop table if exists recipe_ingredient;
 
 drop table if exists recipe_book;
 
 drop table if exists recipe_book_recipe;
+
+drop table if exists tag;
 
 drop table if exists user;
 

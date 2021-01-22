@@ -31,11 +31,13 @@ public class UserController {
 
         User usu = form.get();
         Result res = null;
+        System.out.println("createUser01");
         if (form.hasErrors()){
             System.err.println(form.errorsAsJson());
             res = Results.badRequest(form.errorsAsJson());
         }
-        System.out.println("createUser1");
+        System.out.println("createUser1 " + usu.getUsername());
+
         usu.save();
         users.add(usu);
         System.out.println("createUser2");

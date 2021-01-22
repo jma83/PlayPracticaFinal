@@ -1,7 +1,6 @@
 package models;
 
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +30,9 @@ public class Recipe extends BaseModel {
     @Required
     String description;
     Boolean visibility = true;
-    List<String> tagList = new ArrayList<>();
+    @JsonIgnore
+    @ManyToMany(cascade = CascadeType.ALL)
+    List<Tag> tagList = new ArrayList<>();
     @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
     public List<Ingredient> ingredientList = new ArrayList<>();
@@ -47,7 +48,7 @@ public class Recipe extends BaseModel {
         super();
     }
 
-    public Recipe (String name, String description, Boolean visibility, List<String> tagList,
+    public Recipe (String name, String description, Boolean visibility, List<Tag> tagList,
                    List<Ingredient> ingredientList,User author,List<RecipeBook> recipeBookList){
         super();
         this.name = name;
@@ -92,11 +93,11 @@ public class Recipe extends BaseModel {
         this.visibility = publicRecipe;
     }
 
-    public List<String> getTagList() {
+    public List<Tag> getTagList() {
         return tagList;
     }
 
-    public void setTagList(List<String> tagList) {
+    public void setTagList(List<Tag> tagList) {
         this.tagList = tagList;
     }
 

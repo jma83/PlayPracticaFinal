@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.Finder;
 import play.data.validation.Constraints.*;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import java.util.ArrayList;
@@ -27,8 +28,8 @@ public class Ingredient extends BaseModel {
     String description;
     Float quantity;
     String measure;
-    @JsonIgnore
-    List<String> tagList = new ArrayList<>();
+    @ManyToMany(cascade = CascadeType.ALL)
+    List<Tag> tagList = new ArrayList<>();
 
     @JsonIgnore
     @ManyToMany(mappedBy = "ingredientList")
@@ -36,11 +37,12 @@ public class Ingredient extends BaseModel {
 
 
 
+
     public Ingredient (){
         super();
     }
 
-    public Ingredient (String name, String description, Float quantity, String measure, List<String> tagList,List<Recipe> recipeList){
+    public Ingredient (String name, String description, Float quantity, String measure, List<Tag> tagList,List<Recipe> recipeList){
         super();
         this.name = name;
         this.description = description;
@@ -82,11 +84,13 @@ public class Ingredient extends BaseModel {
         this.measure = measure;
     }
 
-    public List<String> getTagList() {
+    public List<Tag> getTagList() {
+
         return tagList;
+
     }
 
-    public void setTagList(List<String> tagList) {
+    public void setTagList(List<Tag> tagList) {
         this.tagList = tagList;
     }
 

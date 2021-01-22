@@ -5,7 +5,9 @@
     <description>@ingredient.getDescription()</description>
     <quantity>@ingredient.getQuantity()</quantity>
     <measure>@ingredient.getMeasure()</measure>
+    @if(ingredient != null && ingredient.getTagList()!=null){
     @views.xml.common.tags(ingredient.getTagList())
+    }
     @if(false){
     <vegans/>
     }
