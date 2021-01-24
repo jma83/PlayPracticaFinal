@@ -1,6 +1,7 @@
 @(recipe: Recipe)
 
 <recipe>
+    <id>@recipe.getId()</id>
     <name>@recipe.getName()</name>
     <description>@recipe.getDescription()</description>
     <visibility>@recipe.getVisibility()</visibility>

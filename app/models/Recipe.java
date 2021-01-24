@@ -125,7 +125,7 @@ public class Recipe extends BaseModel {
         this.recipeBookList = recipeBookList;
     }
 
-    public void updateRecipe(Recipe recipe){
+    public void update(Recipe recipe){
         this.name = recipe.getName();
         this.description = recipe.getDescription();
         this.author = recipe.getAuthor();

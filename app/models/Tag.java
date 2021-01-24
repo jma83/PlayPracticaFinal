@@ -10,7 +10,7 @@ import java.util.List;
 @Entity
 public class Tag extends BaseModel {
     @Required
-    String tag = "";
+    String tagName = "";
 
     @JsonIgnore
     @ManyToMany(mappedBy = "tagList")
@@ -20,20 +20,21 @@ public class Tag extends BaseModel {
 
     public Tag(){
         super();
+        setTitleXML("tag");
     }
 
     public Tag (String tagName,List<Ingredient> ingredientList,List<Recipe> recipeList){
-        this.tag = tagName;
+        this.tagName = tagName;
         this.ingredientList = ingredientList;
         this.recipeList = recipeList;
     }
 
     public String getTagName() {
-        return tag;
+        return tagName;
     }
 
     public void setTagName(String tagName) {
-        this.tag = tagName;
+        this.tagName = tagName;
     }
 
 

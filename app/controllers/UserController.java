@@ -5,19 +5,14 @@ import models.User;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import play.data.Form;
-import play.data.FormFactory;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
 import play.twirl.api.Content;
 
-import javax.inject.Inject;
 import java.util.*;
 
 public class UserController extends BaseController {
-    @Inject
-    FormFactory formFactory;
-
 
     String noResults = "Sin resultados!";
     String formatError = "Error formato no numerico";
@@ -108,7 +103,7 @@ public class UserController extends BaseController {
         if (user != null && res == null && index.isPresent()){
             Long id = Long.valueOf(index.get());
             User userUpdate = User.findById(id);
-            userUpdate.updateUser(user);
+            userUpdate.update(user);
             modelList.add(userUpdate);
             userUpdate.update();
             res = this.contentNegotiation(request,getContentXML());

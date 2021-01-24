@@ -74,7 +74,7 @@ public class RecipeBook extends BaseModel{
         this.author = author;
     }
 
-    public void updateRecipeBook(RecipeBook rb){
+    public void update(RecipeBook rb){
         this.name = rb.getName();
         this.review = rb.getReview();
         this.author = rb.getAuthor();

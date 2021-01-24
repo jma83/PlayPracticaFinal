@@ -2,6 +2,7 @@ package models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.Finder;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import play.data.validation.Constraints.*;
 
 import javax.persistence.CascadeType;
@@ -32,6 +33,7 @@ public class Ingredient extends BaseModel {
     List<Tag> tagList = new ArrayList<>();
 
     @JsonIgnore
+    @Ignore
     @ManyToMany(mappedBy = "ingredientList")
     public List<Recipe> recipeList;
 
@@ -89,11 +91,7 @@ public class Ingredient extends BaseModel {
         this.measure = measure;
     }
 
-    public List<Tag> getTagList() {
-
-        return tagList;
-
-    }
+    public List<Tag> getTagList() { return tagList; }
 
     public void setTagList(List<Tag> tagList) {
         this.tagList = tagList;
@@ -115,7 +113,7 @@ public class Ingredient extends BaseModel {
         this.recipeList = recipeList;
     }
 
-    public void updateIngredient(Ingredient ingr){
+    public void update(Ingredient ingr){
         this.name = ingr.getName();
         this.description = ingr.getDescription();
         this.quantity = ingr.getQuantity();

@@ -121,7 +121,7 @@ public class User extends BaseModel {
         this.age = age;
     }
 
-    public void updateUser(User u){
+    public void update(User u){
         this.setAge(u.getAge());
         this.setBirthdate(u.getBirthdate());
         this.setCountry(u.getCountry());

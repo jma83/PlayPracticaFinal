@@ -1,66 +1,77 @@
 package controllers;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import models.Recipe;
+import com.fasterxml.jackson.databind.JsonNode;
 import models.RecipeBook;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 import play.data.Form;
 import play.data.FormFactory;
-import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
 import play.twirl.api.Content;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Optional;
 
-//FormFactory (solo post y get)
-public class RecipeBookController {
-    @Inject
-    FormFactory formFactory;
+public class RecipeBookController extends BaseController {
 
-    List<RecipeBook> recipeBookList = new ArrayList<>();
     String noResults = "Sin resultados!";
     String formatError = "Error formato no numerico";
     String headerCount = "X-RecipeBook-Count";
 
     public Result createRecipeBook(Http.Request request){
-        Form<RecipeBook> form = formFactory.form(RecipeBook.class).bindFromRequest(request);
-        RecipeBook recipeBook = form.get();
         Result res = null;
+        Form<RecipeBook> form = null;
+        RecipeBook recipeBook = new RecipeBook();
 
+        Document doc = request.body().asXml();
+        JsonNode json = request.body().asJson();
+
+        if (doc != null){
+            NodeList modelNode = doc.getElementsByTagName(recipeBook.getTitleXML());
+            RecipeBook r = (RecipeBook) createWithXML(modelNode,recipeBook).get(0);
+            form = formFactory.form(RecipeBook.class).fill(r);
+        }else if (json != null){
+            form = formFactory.form(RecipeBook.class).bindFromRequest(request);
+        }else{
+            res = Results.badRequest(noResults);
+        }
+
+        recipeBook = form.get();
         if (form.hasErrors()){
             System.err.println(form.errorsAsJson());
             res = Results.badRequest(form.errorsAsJson());
         }
 
         recipeBook.save();
-        recipeBookList.add(recipeBook);
+        modelList.add(recipeBook);
         System.out.println("RecipeBook inserted: " + recipeBook);
-        if (res==null)
-            res = this.contentNegotiation(request,this.recipeBookList);
 
-        return res.withHeader(headerCount,String.valueOf(recipeBookList.size()));
+
+        if (res==null)
+            res = this.contentNegotiation(request,getContentXML());
+
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     public Result getRecipeBook(Http.Request request){
         Result res = null;
         Optional<String> index = request.queryString("index");
 
-        recipeBookList = RecipeBook.findAll();
-        if (recipeBookList.size() == 0)
+        modelList.addAll(RecipeBook.findAll());
+        if (modelList.size() == 0)
             res = Results.notFound(noResults);
 
         if (index.isPresent() && res==null)
             res = this.getIndexRecipeBook(index.get());
 
         if (res == null)
-            res = this.contentNegotiation(request,this.recipeBookList);
+            res = this.contentNegotiation(request,getContentXML());
 
 
-        return res.withHeader(headerCount,String.valueOf(recipeBookList.size()));
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
 
     }
 
@@ -68,11 +79,11 @@ public class RecipeBookController {
         Result res = null;
 
         System.out.println(index);
-        recipeBookList.clear();
+        modelList.clear();
         try {
             RecipeBook r = RecipeBook.findById(Integer.parseInt(index));
             if (r != null) {
-                recipeBookList.add(r);
+                modelList.add(r);
             }else{
                 res = Results.notFound(noResults);
             }
@@ -87,20 +98,20 @@ public class RecipeBookController {
         Result res = null;
         Form<RecipeBook> form = formFactory.form(RecipeBook.class).bindFromRequest(request);
         Optional<String> index = request.queryString("index");
-        RecipeBook recipeBook = form.get();
+        RecipeBook recipe = form.get();
         if (form.hasErrors()){
             System.err.println(form.errorsAsJson());
             res = Results.badRequest(form.errorsAsJson());
         }
-        if (recipeBook != null && res == null && index.isPresent()){
+        if (recipe != null && res == null && index.isPresent()){
             Long id = Long.valueOf(index.get());
-            RecipeBook recipeBookUpdate = RecipeBook.findById(id);
-            recipeBookUpdate.updateRecipeBook(recipeBook);
-            this.recipeBookList.add(recipeBookUpdate);
-            recipeBookUpdate.update();
-            res = this.contentNegotiation(request,this.recipeBookList);
+            RecipeBook recipeUpdate = RecipeBook.findById(id);
+            recipeUpdate.update(recipe);
+            this.modelList.add(recipe);
+            recipeUpdate.update();
+            res = this.contentNegotiation(request,getContentXML());
         }
-        return res.withHeader(headerCount,String.valueOf(recipeBookList.size()));
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     public Result deleteRecipeBook(Http.Request request){
@@ -109,26 +120,18 @@ public class RecipeBookController {
         if (index.isPresent()){
             Long id = Long.valueOf(index.get());
             RecipeBook recipeUpdate = RecipeBook.findById(id);
-            this.recipeBookList.add(recipeUpdate);
+            this.modelList.add(recipeUpdate);
             recipeUpdate.delete();
-            res = this.contentNegotiation(request,this.recipeBookList);
+            res = this.contentNegotiation(request,getContentXML());
         }
-        return res.withHeader(headerCount,String.valueOf(recipeBookList.size()));
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
-    public Result contentNegotiation(Http.Request request,List<RecipeBook> recipeBookList){
-        Result res = null;
-        if (request.accepts("application/xml")){
-            Content content = views.xml.RecipeBook.recipeBooks.render(recipeBookList);
-            res = Results.ok(content);
-        }else if (request.accepts("application/json")) {
-            res = Results.ok(Json.toJson(recipeBookList));
-        }else{
-            res = Results.badRequest();
-        }
 
-        this.recipeBookList.clear();
-
-        return res;
+    public Content getContentXML(){
+        RecipeBook[] array = new RecipeBook[modelList.size()];
+        modelList.toArray(array);
+        Content content = views.xml.RecipeBook.recipeBooks.render(Arrays.asList(array));
+        return content;
     }
 }

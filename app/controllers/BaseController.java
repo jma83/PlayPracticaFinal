@@ -6,12 +6,14 @@ import models.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import play.data.FormFactory;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
 import play.twirl.api.Content;
 
+import javax.inject.Inject;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -22,15 +24,21 @@ import java.util.Date;
 import java.util.List;
 
 public class BaseController {
+
+    @Inject
+    FormFactory formFactory;
     List<BaseModel> modelList = new ArrayList<>();
+
     public List<BaseModel> createWithXML(NodeList modelNode,Object instance){
         List<BaseModel> models = new ArrayList<>();
+        //Fuente: https://stackoverflow.com/questions/15315368/java-reflection-get-all-private-fields
         Field[] allFields = instance.getClass().getDeclaredFields();
 
 
         for (int i = 0;i <modelNode.getLength();i++){
             Element a = (Element) modelNode.item(i);
             Object instance1 = null;
+            //Fuente: https://stackoverflow.com/questions/10470263/create-new-object-using-reflection
             try {
                 instance1 = instance.getClass().newInstance();
             } catch (InstantiationException e) {
@@ -38,7 +46,6 @@ public class BaseController {
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
-            //Fuente: https://stackoverflow.com/questions/15315368/java-reflection-get-all-private-fields
             for (Field field : allFields) {
                 NodeList nodeList2 = a.getElementsByTagName(field.getName());
                 Element e = (Element)nodeList2.item(0);
@@ -124,11 +131,6 @@ public class BaseController {
 
         return res;
     }
-
-    public void iterateElementList(Element e){
-        System.out.println("iterateElementList PARENT!");
-    }
-
 
 
     public String getTextNode(Element e) {

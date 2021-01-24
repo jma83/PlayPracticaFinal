@@ -67,7 +67,7 @@ create table recipe_book_recipe (
 create table tag (
   id                            bigint auto_increment not null,
   title_xml                     varchar(255),
-  tag                           varchar(255),
+  tag_name                      varchar(255),
   version                       bigint not null,
   when_created                  timestamp not null,
   when_updated                  timestamp not null,
