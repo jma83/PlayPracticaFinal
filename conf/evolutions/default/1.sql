@@ -5,6 +5,7 @@
 
 create table ingredient (
   id                            bigint auto_increment not null,
+  title_xml                     varchar(255),
   name                          varchar(255),
   description                   varchar(255),
   quantity                      float,
@@ -23,6 +24,7 @@ create table ingredient_tag (
 
 create table recipe (
   id                            bigint auto_increment not null,
+  title_xml                     varchar(255),
   name                          varchar(255),
   description                   varchar(255),
   visibility                    boolean,
@@ -47,6 +49,7 @@ create table recipe_ingredient (
 
 create table recipe_book (
   id                            bigint auto_increment not null,
+  title_xml                     varchar(255),
   name                          varchar(255),
   review                        varchar(255),
   version                       bigint not null,
@@ -63,6 +66,7 @@ create table recipe_book_recipe (
 
 create table tag (
   id                            bigint auto_increment not null,
+  title_xml                     varchar(255),
   tag                           varchar(255),
   version                       bigint not null,
   when_created                  timestamp not null,
@@ -72,14 +76,15 @@ create table tag (
 
 create table user (
   id                            bigint auto_increment not null,
+  title_xml                     varchar(255),
   username                      varchar(255),
   email                         varchar(255),
   birthdate                     timestamp,
   age                           integer,
   country                       varchar(255),
   language                      varchar(255),
-  password                      varchar(255),
   privilege                     integer,
+  password                      varchar(255),
   recipe_book_id                bigint,
   version                       bigint not null,
   when_created                  timestamp not null,

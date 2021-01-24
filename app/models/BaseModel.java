@@ -2,6 +2,7 @@ package models;
 
 import io.ebean.Model;
 import io.ebean.annotation.CreatedTimestamp;
+import io.ebean.annotation.JsonIgnore;
 import io.ebean.annotation.UpdatedTimestamp;
 
 import javax.persistence.Id;
@@ -19,6 +20,8 @@ public class BaseModel extends Model {
     Timestamp whenCreated;
     @UpdatedTimestamp
     Timestamp whenUpdated;
+    @JsonIgnore
+    String titleXML = null;
 
     public Long getId() {
         return id;
@@ -50,5 +53,16 @@ public class BaseModel extends Model {
 
     public void setWhenUpdated(Timestamp whenUpdated) {
         this.whenUpdated = whenUpdated;
+    }
+
+    public String getTitleXML() {
+        return titleXML;
+    }
+
+    public void setTitleXML(String title) {
+        this.titleXML = title;
+    }
+
+    public  void iterateElementList() {
     }
 }

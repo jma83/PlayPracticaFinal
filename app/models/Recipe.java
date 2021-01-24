@@ -46,6 +46,7 @@ public class Recipe extends BaseModel {
 
     public Recipe (){
         super();
+        setTitleXML("recipe");
     }
 
     public Recipe (String name, String description, Boolean visibility, List<Tag> tagList,
@@ -58,7 +59,6 @@ public class Recipe extends BaseModel {
         this.ingredientList = ingredientList;
         this.author = author;
         this.recipeBookList = recipeBookList;
-
     }
 
     public User getAuthor() {

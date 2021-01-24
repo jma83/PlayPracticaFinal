@@ -1,6 +1,7 @@
 @(user: User)
 
 <user>
+    <id>@user.getId()</id>
     <username>@user.getUsername()</username>
     <email>@user.getEmail()</email>
     <birthdate>@user.getBirthdate()</birthdate>

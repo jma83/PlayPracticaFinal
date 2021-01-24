@@ -28,8 +28,11 @@ public class User extends BaseModel {
     Integer age;
     String country = null;
     String language = null;
-    String password = null;
     Integer privilege = 0;
+
+    @JsonIgnore
+    String password = null;
+
 
     @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
@@ -48,8 +51,10 @@ public class User extends BaseModel {
         return find.byId(id);
     }
 
+
     public User(){
         super();
+        setTitleXML("user");
     }
 
     public User(String username,String email,Date birthdate, Integer age, String country, String language, Integer privilege){

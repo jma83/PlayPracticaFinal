@@ -32,6 +32,7 @@ public class RecipeBook extends BaseModel{
 
     public RecipeBook (){
         super();
+        setTitleXML("recipeBook");
     }
 
     public RecipeBook (String name, String review, List<Recipe> recipeList, User author){

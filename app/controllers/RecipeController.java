@@ -1,10 +1,13 @@
 package controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import models.Ingredient;
 import models.Recipe;
+import models.User;
+import org.w3c.dom.Document;
 import play.data.Form;
 import play.data.FormFactory;
 import play.libs.Json;
@@ -18,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class RecipeController {
+public class RecipeController extends BaseController {
     @Inject
     FormFactory formFactory;
 
@@ -28,10 +31,23 @@ public class RecipeController {
     String headerCount = "X-Recipes-Count";
 
     public Result createRecipe(Http.Request request){
-        Form<Recipe> form = formFactory.form(Recipe.class).bindFromRequest(request);
-        Recipe recipe = form.get();
         Result res = null;
+        Form<Recipe> form = null;
+        Recipe recipe = new Recipe();
 
+        Document doc = request.body().asXml();
+        JsonNode json = request.body().asJson();
+
+        if (doc != null){
+            Recipe r = (Recipe) createWithXML(doc,recipe,this).get(0);
+            form = formFactory.form(Recipe.class).fill(r);
+        }else if (json != null){
+            form = formFactory.form(Recipe.class).bindFromRequest(request);
+        }else{
+            res = Results.badRequest(noResults);
+        }
+
+        recipe = form.get();
         if (form.hasErrors()){
             System.err.println(form.errorsAsJson());
             res = Results.badRequest(form.errorsAsJson());
@@ -40,6 +56,7 @@ public class RecipeController {
         recipe.save();
         recipes.add(recipe);
         System.out.println("Recipe inserted: " + recipe);
+
         if (res==null)
             res = this.contentNegotiation(request,this.recipes);
 
@@ -138,5 +155,9 @@ public class RecipeController {
         this.recipes.clear();
 
         return res;
+    }
+
+    public void iterateElementList(){
+        System.out.println("iterateElementList CHILD!");
     }
 }

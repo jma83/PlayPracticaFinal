@@ -1,8 +1,14 @@
 package controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.ebeaninternal.server.lib.util.Str;
 import models.User;
+import models.User2.UserModel;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import play.data.Form;
 import play.data.FormFactory;
 import play.libs.Json;
@@ -10,13 +16,20 @@ import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
 import play.twirl.api.Content;
+import scala.Int;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
-public class UserController {
+public class UserController extends BaseController {
     @Inject
     FormFactory formFactory;
 
@@ -26,24 +39,35 @@ public class UserController {
     String headerCount = "X-User-Count";
 
     public Result createUser(Http.Request request){
-        Form<User> form = formFactory.form(User.class).bindFromRequest(request);
-        System.out.println("createUser0");
-
-        User usu = form.get();
         Result res = null;
-        System.out.println("createUser01");
+        Form<User> form = null;
+        User user = new User();
+
+        Document doc = request.body().asXml();
+        JsonNode json = request.body().asJson();
+
+        if (doc != null){
+            User u = (User) createWithXML(doc,user,this).get(0);
+            form = formFactory.form(User.class).fill(u);
+        }else if (json != null){
+            form = formFactory.form(User.class).bindFromRequest(request);
+        }else{
+            res = Results.badRequest(noResults);
+        }
+
+        user = form.get();
         if (form.hasErrors()){
             System.err.println(form.errorsAsJson());
             res = Results.badRequest(form.errorsAsJson());
         }
-        System.out.println("createUser1 " + usu.getUsername());
 
-        usu.save();
-        users.add(usu);
-        System.out.println("createUser2");
-        System.out.println("User inserted: " + usu);
+        user.save();
+        users.add(user);
+        System.out.println("User inserted: " + user);
+
+
         if (res==null)
-        res = this.contentNegotiation(request,this.users);
+            res = this.contentNegotiation(request,this.users);
 
         return res.withHeader(headerCount,String.valueOf(users.size()));
     }
@@ -142,5 +166,8 @@ public class UserController {
         this.users.clear();
 
         return res;
+    }
+    public void iterateElementList(){
+        System.out.println("iterateElementList CHILD!");
     }
 }

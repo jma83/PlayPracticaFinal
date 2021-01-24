@@ -40,6 +40,7 @@ public class Ingredient extends BaseModel {
 
     public Ingredient (){
         super();
+        setTitleXML("ingredient");
     }
 
     public Ingredient (String name, String description, Float quantity, String measure, List<Tag> tagList,List<Recipe> recipeList){
@@ -50,6 +51,10 @@ public class Ingredient extends BaseModel {
         this.measure = measure;
         this.tagList = tagList;
         this.recipeList = recipeList;
+    }
+
+    public static String getTitle(){
+        return "ingredient";
     }
 
     public String getName() {

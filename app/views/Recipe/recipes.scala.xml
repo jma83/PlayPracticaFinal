@@ -1,7 +1,3 @@
 @(recipes: List[Recipe])
 <?xml version="1.0" encoding="utf-8" ?>
-<recipes>
-    @for(r <- recipes){
-        @_recipe(r)
-    }
-</recipes>
+<recipeList>@for(r <- recipes){ @_recipe(r) }</recipeList>
