@@ -1,15 +1,20 @@
 package controllers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import models.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import scala.xml.Elem;
+import play.libs.Json;
+import play.mvc.Http;
+import play.mvc.Result;
+import play.mvc.Results;
+import play.twirl.api.Content;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,32 +22,41 @@ import java.util.Date;
 import java.util.List;
 
 public class BaseController {
-
-    public List<BaseModel> createWithXML(Document req,Object instance, Object controllerInstance){
+    List<BaseModel> modelList = new ArrayList<>();
+    public List<BaseModel> createWithXML(NodeList modelNode,Object instance){
         List<BaseModel> models = new ArrayList<>();
         Field[] allFields = instance.getClass().getDeclaredFields();
 
-        BaseModel baseModel = (BaseModel)instance;
-        String title = baseModel.getTitleXML();
-        NodeList modelNode = req.getElementsByTagName(title);
 
         for (int i = 0;i <modelNode.getLength();i++){
             Element a = (Element) modelNode.item(i);
+            Object instance1 = null;
+            try {
+                instance1 = instance.getClass().newInstance();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
             //Fuente: https://stackoverflow.com/questions/15315368/java-reflection-get-all-private-fields
             for (Field field : allFields) {
-                Element e = (Element) a.getElementsByTagName(field.getName()).item(0);
+                NodeList nodeList2 = a.getElementsByTagName(field.getName());
+                Element e = (Element)nodeList2.item(0);
                 if (e != null) {
                     String s = getTextNode(e);
-                    Object obj = castObject(s,field);
-                    if (obj != null) {
-                        invokeSetter(instance, field.getName(), obj);
-                    }else{
-                        BaseController bc = (BaseController) controllerInstance;
-                        bc.iterateElementList();
+                    Object obj = castObject(s, field);
+                    if (!(obj instanceof BaseModel)) {
+                        invokeSetter(instance1, field.getName(), obj);
+                    } else {
+                        BaseModel bm = (BaseModel) obj;
+                        List<BaseModel> l = createWithXML(e.getElementsByTagName(bm.getTitleXML()), obj);
+                        invokeSetter(instance1, field.getName(), l);
                     }
                 }
+
             }
-            models.add((BaseModel) instance);
+            if (instance1!=null)
+            models.add((BaseModel) instance1);
         }
 
         return models;
@@ -75,13 +89,43 @@ public class BaseController {
                 e.printStackTrace();
             }
         }else if (f.getType() == List.class){
-            System.out.println("Holi!");
-            finalObj = null;
+            if (f.getName().equals("ingredientList")){
+                finalObj = new Ingredient();
+            }else if (f.getName().equals("recipeList")){
+                finalObj = new Recipe();
+            }else if (f.getName().equals("tagList")){
+                finalObj = new Tag();
+            }
         }
         return finalObj;
     }
 
-    public void iterateElementList(){
+    public Result contentNegotiation(Http.Request request, Content content){
+        Result res = null;
+        System.out.println("createUser3");
+        System.out.println(modelList.size());
+        if (request.accepts("application/xml")){
+
+            res = Results.ok(content);
+        }else if (request.accepts("application/json")) {
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                String result = mapper.writeValueAsString(modelList);
+                res = Results.ok(Json.parse(result));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+
+        }else{
+            res = Results.badRequest();
+        }
+        System.out.println("createUser4");
+        modelList.clear();
+
+        return res;
+    }
+
+    public void iterateElementList(Element e){
         System.out.println("iterateElementList PARENT!");
     }
 

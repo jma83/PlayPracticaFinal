@@ -99,11 +99,19 @@ public class Ingredient extends BaseModel {
         this.tagList = tagList;
     }
 
+    public void setTagList(ArrayList<Tag> tagList) {
+        this.tagList = tagList;
+    }
+
     public List<Recipe> getRecipeList() {
         return recipeList;
     }
 
     public void setRecipeList(List<Recipe> recipeList) {
+        this.recipeList = recipeList;
+    }
+
+    public void setRecipeList(ArrayList<Recipe> recipeList) {
         this.recipeList = recipeList;
     }
 

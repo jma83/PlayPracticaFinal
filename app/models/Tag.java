@@ -18,6 +18,10 @@ public class Tag extends BaseModel {
     @ManyToMany(mappedBy = "tagList")
     public List<Recipe> recipeList;
 
+    public Tag(){
+        super();
+    }
+
     public Tag (String tagName,List<Ingredient> ingredientList,List<Recipe> recipeList){
         this.tag = tagName;
         this.ingredientList = ingredientList;

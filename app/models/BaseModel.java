@@ -63,6 +63,4 @@ public class BaseModel extends Model {
         this.titleXML = title;
     }
 
-    public  void iterateElementList() {
-    }
 }

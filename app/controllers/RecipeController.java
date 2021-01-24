@@ -8,6 +8,8 @@ import models.Ingredient;
 import models.Recipe;
 import models.User;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import play.data.Form;
 import play.data.FormFactory;
 import play.libs.Json;
@@ -18,6 +20,7 @@ import play.twirl.api.Content;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,7 +28,6 @@ public class RecipeController extends BaseController {
     @Inject
     FormFactory formFactory;
 
-    List<Recipe> recipes = new ArrayList<>();
     String noResults = "Sin resultados!";
     String formatError = "Error formato no numerico";
     String headerCount = "X-Recipes-Count";
@@ -39,7 +41,8 @@ public class RecipeController extends BaseController {
         JsonNode json = request.body().asJson();
 
         if (doc != null){
-            Recipe r = (Recipe) createWithXML(doc,recipe,this).get(0);
+            NodeList modelNode = doc.getElementsByTagName(recipe.getTitleXML());
+            Recipe r = (Recipe) createWithXML(modelNode,recipe).get(0);
             form = formFactory.form(Recipe.class).fill(r);
         }else if (json != null){
             form = formFactory.form(Recipe.class).bindFromRequest(request);
@@ -54,31 +57,32 @@ public class RecipeController extends BaseController {
         }
 
         recipe.save();
-        recipes.add(recipe);
+        modelList.add(recipe);
         System.out.println("Recipe inserted: " + recipe);
 
-        if (res==null)
-            res = this.contentNegotiation(request,this.recipes);
 
-        return res.withHeader(headerCount,String.valueOf(recipes.size()));
+        if (res==null)
+            res = this.contentNegotiation(request,getContentXML());
+
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     public Result getRecipe(Http.Request request){
         Result res = null;
         Optional<String> index = request.queryString("index");
 
-        recipes = Recipe.findAll();
-        if (recipes.size() == 0)
+        modelList.addAll(Recipe.findAll());
+        if (modelList.size() == 0)
             res = Results.notFound(noResults);
 
         if (index.isPresent() && res==null)
             res = this.getIndexRecipe(index.get());
 
         if (res == null)
-            res = this.contentNegotiation(request,this.recipes);
+            res = this.contentNegotiation(request,getContentXML());
 
 
-        return res.withHeader(headerCount,String.valueOf(recipes.size()));
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
 
     }
 
@@ -86,11 +90,11 @@ public class RecipeController extends BaseController {
         Result res = null;
 
         System.out.println(index);
-        recipes.clear();
+        modelList.clear();
         try {
             Recipe r = Recipe.findById(Integer.parseInt(index));
             if (r != null) {
-                recipes.add(r);
+                modelList.add(r);
             }else{
                 res = Results.notFound(noResults);
             }
@@ -114,11 +118,11 @@ public class RecipeController extends BaseController {
             Long id = Long.valueOf(index.get());
             Recipe recipeUpdate = Recipe.findById(id);
             recipeUpdate.updateRecipe(recipe);
-            this.recipes.add(recipe);
+            this.modelList.add(recipe);
             recipeUpdate.update();
-            res = this.contentNegotiation(request,this.recipes);
+            res = this.contentNegotiation(request,getContentXML());
         }
-        return res.withHeader(headerCount,String.valueOf(recipes.size()));
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     public Result deleteRecipe(Http.Request request){
@@ -127,11 +131,11 @@ public class RecipeController extends BaseController {
         if (index.isPresent()){
             Long id = Long.valueOf(index.get());
             Recipe recipeUpdate = Recipe.findById(id);
-            this.recipes.add(recipeUpdate);
+            this.modelList.add(recipeUpdate);
             recipeUpdate.delete();
-            res = this.contentNegotiation(request,this.recipes);
+            res = this.contentNegotiation(request,getContentXML());
         }
-        return res.withHeader(headerCount,String.valueOf(recipes.size()));
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     public Result contentNegotiation(Http.Request request,List<Recipe> recipes){
@@ -152,12 +156,19 @@ public class RecipeController extends BaseController {
             res = Results.badRequest();
         }
 
-        this.recipes.clear();
+        this.modelList.clear();
 
         return res;
     }
 
-    public void iterateElementList(){
+    public void iterateElementList(Element e){
         System.out.println("iterateElementList CHILD!");
+    }
+
+    public Content getContentXML(){
+        Recipe[] array = new Recipe[modelList.size()];
+        modelList.toArray(array);
+        Content content = views.xml.Recipe.recipes.render(Arrays.asList(array));
+        return content;
     }
 }

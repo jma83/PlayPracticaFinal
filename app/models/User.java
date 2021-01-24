@@ -77,6 +77,10 @@ public class User extends BaseModel {
         this.recipeList = recipeList;
     }
 
+    public void setRecipeList(ArrayList<Recipe> recipeList){
+        this.recipeList = recipeList;
+    }
+
     public String getUsername() {
         return username;
     }
