@@ -12,6 +12,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.validation.Valid;
 
 @Entity
 public class Recipe extends BaseModel {
@@ -32,9 +33,11 @@ public class Recipe extends BaseModel {
     Boolean visibility = true;
     @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
+    @Valid
     List<Tag> tagList = new ArrayList<>();
     @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
+    @Valid
     public List<Ingredient> ingredientList = new ArrayList<>();
     @JsonIgnore
     @ManyToOne

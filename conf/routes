@@ -2,11 +2,11 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-
 POST /user controllers.UserController.createUser(request: Request)
 GET /user controllers.UserController.getUser(request: Request)
 PUT /user controllers.UserController.updateUser(request: Request)
 DELETE /user controllers.UserController.deleteUser(request: Request)
+POST /login controllers.UserController.loginUser(request: Request)
 
 POST /recipe controllers.RecipeController.createRecipe(request: Request)
 GET /recipe controllers.RecipeController.getRecipe(request: Request)

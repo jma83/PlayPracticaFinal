@@ -8,6 +8,7 @@ import play.data.validation.Constraints.*;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +31,7 @@ public class Ingredient extends BaseModel {
     Float quantity;
     String measure;
     @ManyToMany(cascade = CascadeType.ALL)
+    @Valid
     List<Tag> tagList = new ArrayList<>();
 
     @JsonIgnore

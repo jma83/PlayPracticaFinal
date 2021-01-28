@@ -1,13 +1,12 @@
 package controllers;
 
+import auth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
 import models.User;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import play.data.Form;
-import play.mvc.Http;
-import play.mvc.Result;
-import play.mvc.Results;
+import play.mvc.*;
 import play.twirl.api.Content;
 
 import java.util.*;
@@ -18,6 +17,7 @@ public class UserController extends BaseController {
     String formatError = "Error formato no numerico";
     String headerCount = "X-User-Count";
 
+    @Security.Authenticated(UserAuthenticator.class)
     public Result createUser(Http.Request request){
         Result res = null;
         Form<User> form = null;
@@ -43,6 +43,41 @@ public class UserController extends BaseController {
         }
 
         user.save();
+        modelList.add(user);
+        System.out.println("User inserted: " + user);
+
+
+        if (res==null)
+            res = this.contentNegotiation(request,getContentXML());
+
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
+    }
+
+    public Result loginUser(Http.Request request){
+        Result res = null;
+        Form<User> form = null;
+        User user = new User();
+
+        Document doc = request.body().asXml();
+        JsonNode json = request.body().asJson();
+
+        if (doc != null){
+            NodeList modelNode = doc.getElementsByTagName(user.getTitleXML());
+            User u = (User) createWithXML(modelNode,user).get(0);
+            form = formFactory.form(User.class).fill(u);
+        }else if (json != null){
+            form = formFactory.form(User.class).bindFromRequest(request);
+        }else{
+            res = Results.badRequest(noResults);
+        }
+
+        user = form.get();
+        if (form.hasErrors()){
+            System.err.println(form.errorsAsJson());
+            res = Results.badRequest(form.errorsAsJson());
+        }
+
+
         modelList.add(user);
         System.out.println("User inserted: " + user);
 
@@ -132,3 +167,5 @@ public class UserController extends BaseController {
         return content;
     }
 }
+
+

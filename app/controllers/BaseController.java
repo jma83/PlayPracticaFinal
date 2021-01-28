@@ -8,6 +8,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import play.data.FormFactory;
 import play.libs.Json;
+import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
@@ -23,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class BaseController {
+public class BaseController extends Controller {
 
     @Inject
     FormFactory formFactory;

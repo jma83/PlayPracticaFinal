@@ -10,6 +10,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -24,7 +25,7 @@ public class User extends BaseModel {
     String email;
     @Required
     Date birthdate;
-    @Required
+    @JsonIgnore
     Integer age;
     String country = null;
     String language = null;
@@ -37,8 +38,8 @@ public class User extends BaseModel {
     @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
     public List<Recipe> recipeList = new ArrayList<>();
-    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL)
+    @Valid
     public RecipeBook recipeBook;
 
     @JsonIgnore
@@ -145,6 +146,13 @@ public class User extends BaseModel {
 
     public void setLanguage(String language) {
         this.language = language;
+    }
+
+    public boolean checkLogin(String username, String password){
+        if (username.equals(this.username) && password.equals(this.password)){
+            return true;
+        }
+        return false;
     }
 
 
