@@ -17,7 +17,7 @@ public class UserController extends BaseController {
 
     String headerCount = "X-User-Count";
 
-    //@Security.Authenticated(UserAuthenticator.class)
+    @Security.Authenticated(UserAuthenticator.class)
     public Result createUser(Http.Request request){
         return postUser(request,true);
     }
@@ -30,11 +30,14 @@ public class UserController extends BaseController {
 
         Form<User> form = formFactory.form(User.class);
         Result res = null;
-        res = validateRequestForm(request,form);
+        form = validateRequestForm(request,form);
+        res = checkFormErrors(form);
         if (res == null) {
             this.saveModel(form.get(), saveModel);
             res = this.contentNegotiation(request, getContentXML());
         }
+
+
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -79,10 +82,10 @@ public class UserController extends BaseController {
     public Result updateUser(Http.Request request){
         Result res = null;
         Form<User> form = formFactory.form(User.class);
+        form = validateRequestForm(request,form);
         Optional<String> index = request.queryString("index");
 
-        res = validateRequestForm(request,form);
-
+        res = checkFormErrors(form);
         if (res == null && index.isPresent()) {
             Long id = Long.valueOf(index.get());
             User userUpdate = User.findById(id);
@@ -101,12 +104,13 @@ public class UserController extends BaseController {
             Long id = Long.valueOf(index.get());
             User usuFinal = User.findById(id);
             this.deleteModel(usuFinal);
+
             res = this.contentNegotiation(request,getContentXML());
         }
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
-    public Result validateRequestForm(Http.Request request, Form<User> form){
+    public Form<User> validateRequestForm(Http.Request request, Form<User> form){
         User user = new User();
         Document doc = request.body().asXml();
         JsonNode json = request.body().asJson();
@@ -118,8 +122,16 @@ public class UserController extends BaseController {
         }else if (json != null){
             form = form.bindFromRequest(request);
         }else{
-            return Results.badRequest(noResults);
+            form = null;
         }
+
+
+        return form;
+    }
+
+    public Result checkFormErrors(Form<User> form){
+        if (form==null)
+            return Results.badRequest(noResults);
 
         if (form.hasErrors()){
             System.err.println(form.errorsAsJson());
@@ -128,7 +140,6 @@ public class UserController extends BaseController {
         }
         return null;
     }
-
 
     public Content getContentXML(){
         User[] array = new User[modelList.size()];
