@@ -1,11 +1,13 @@
 package controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import models.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import play.data.Form;
 import play.data.FormFactory;
 import play.libs.Json;
 import play.mvc.Controller;
@@ -29,6 +31,8 @@ public class BaseController extends Controller {
     @Inject
     FormFactory formFactory;
     List<BaseModel> modelList = new ArrayList<>();
+    String noResults = "No results!";
+    String formatError = "Error, incorrect format";
 
     public List<BaseModel> createWithXML(NodeList modelNode,Object instance){
         List<BaseModel> models = new ArrayList<>();
@@ -69,6 +73,9 @@ public class BaseController extends Controller {
 
         return models;
     }
+
+
+
     //Fuente: https://java2blog.com/invoke-getters-setters-using-reflection-java/
     public void invokeSetter(Object obj,String propertyName, Object variableValue){
         try {
@@ -91,7 +98,7 @@ public class BaseController extends Controller {
             finalObj = Integer.parseInt(value);
         }else if (f.getType() == Date.class){
             try {
-                finalObj = new SimpleDateFormat("dd-MMM-yyyy").parse(value);
+                finalObj = new SimpleDateFormat("dd/MM/yyyy").parse(value);
             } catch (ParseException e) {
                 System.out.println("Error formato!");
                 e.printStackTrace();
@@ -110,7 +117,6 @@ public class BaseController extends Controller {
 
     public Result contentNegotiation(Http.Request request, Content content){
         Result res = null;
-        System.out.println("createUser3");
         System.out.println(modelList.size());
         if (request.accepts("application/xml")){
 
@@ -127,14 +133,37 @@ public class BaseController extends Controller {
         }else{
             res = Results.badRequest();
         }
-        System.out.println("createUser4");
         modelList.clear();
 
         return res;
+    }
+
+    public void saveModel(Object modelType, boolean save){
+            BaseModel bm = (BaseModel) modelType;
+            if (save)
+                bm.save();
+
+            modelList.add(bm);
+            System.out.println("Model inserted: " + modelType);
+
+    }
+
+    public void updateModel(Object modelType){
+        BaseModel modelUpdate = (BaseModel) modelType;
+        modelList.add(modelUpdate);
+        modelUpdate.update();
+    }
+
+    public void deleteModel(Object modelType){
+        BaseModel modelDelete = (BaseModel) modelType;
+        this.modelList.add(modelDelete);
+        modelDelete.delete();
     }
 
 
     public String getTextNode(Element e) {
         return e.getChildNodes().item(0).getNodeValue();
     }
+
+
 }

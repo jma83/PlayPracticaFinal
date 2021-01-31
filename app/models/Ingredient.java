@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.Finder;
 import jdk.nashorn.internal.ir.annotations.Ignore;
 import play.data.validation.Constraints.*;
+import validators.Description;
+import validators.Name;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -25,8 +27,10 @@ public class Ingredient extends BaseModel {
     }
 
     @Required
+    @Name
     String name;
     @Required
+    @Description
     String description;
     Float quantity;
     String measure;

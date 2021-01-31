@@ -6,7 +6,10 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.Finder;
+import org.checkerframework.common.value.qual.BoolVal;
 import play.data.validation.Constraints.*;
+import validators.Description;
+import validators.Name;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -27,9 +30,12 @@ public class Recipe extends BaseModel {
     }
 
     @Required
+    @Name
     String name;
     @Required
+    @Description
     String description;
+    @BoolVal({true, false})
     Boolean visibility = true;
     @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)

@@ -2,9 +2,13 @@ package models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.format.annotation.DateTimeFormat;
+import play.data.format.Formats;
 import play.data.validation.Constraints.*;
 
 import io.ebean.Finder;
+import validators.Birthdate;
+import validators.Password;
+import validators.Username;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -19,11 +23,12 @@ import java.util.List;
 @Entity
 public class User extends BaseModel {
     @Required
+    @Username
     String username;
     @Required
     @Email
     String email;
-    @Required
+    @Birthdate
     Date birthdate;
     @JsonIgnore
     Integer age;
@@ -32,6 +37,7 @@ public class User extends BaseModel {
     Integer privilege = 0;
 
     @JsonIgnore
+    //@Password
     String password = null;
 
 

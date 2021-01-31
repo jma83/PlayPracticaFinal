@@ -2,6 +2,7 @@ package models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import play.data.validation.Constraints.*;
+import validators.Name;
 
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
@@ -10,6 +11,7 @@ import java.util.List;
 @Entity
 public class Tag extends BaseModel {
     @Required
+    @Name
     String tagName = "";
 
     @JsonIgnore

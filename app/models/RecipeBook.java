@@ -2,7 +2,9 @@ package models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.Finder;
-import play.data.validation.Constraints;
+import play.data.validation.Constraints.*;
+import validators.Description;
+import validators.Name;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -19,9 +21,11 @@ public class RecipeBook extends BaseModel{
         return find.byId(id);
     }
 
-    @Constraints.Required
+    @Required
+    @Name
     String name;
-    @Constraints.Required
+    @Required
+    @Description
     String review;
     @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
