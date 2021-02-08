@@ -6,21 +6,28 @@ import play.libs.F;
 import javax.validation.ConstraintValidator;
 
 public class NameValidator extends Constraints.Validator<String> implements ConstraintValidator<Name,String> {
-    F.Tuple<String, Object[]> errorMessage;
 
     @Override
     public boolean isValid(String object) {
+        return false;
+    }
+
+    @Override
+    public boolean isValid(String object, javax.validation.ConstraintValidatorContext constraintContext) {
         if (object==null || "".equals(object)) {
-            errorMessage = new F.Tuple<>("Name can't be empty or null", new Object[]{object});
+            constraintContext.disableDefaultConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Name can't be empty or null").addConstraintViolation();
             return false;
         }
 
         if (object.length() < 2 || object.length() > 30) {
-            errorMessage = new F.Tuple<>("Name must be between 2 and 30 characters", new Object[]{object});
+            constraintContext.disableDefaultConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Name must be between 2 and 30 characters").addConstraintViolation();
             return false;
         }
         if (!StringUtils.checkNameFormat(object)){
-            errorMessage = new F.Tuple<>("Invalid name format", new Object[]{object});
+            constraintContext.disableDefaultConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Invalid name format").addConstraintViolation();
             return false;
         }
 
@@ -29,6 +36,6 @@ public class NameValidator extends Constraints.Validator<String> implements Cons
 
     @Override
     public F.Tuple<String, Object[]> getErrorMessageKey() {
-        return errorMessage;
+        return null;
     }
 }

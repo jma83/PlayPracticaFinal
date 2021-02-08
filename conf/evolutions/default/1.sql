@@ -83,14 +83,24 @@ create table user (
   age                           integer,
   country                       varchar(255),
   language                      varchar(255),
-  privilege                     integer,
-  password                      varchar(255),
   recipe_book_id                bigint,
+  user_token_id                 bigint,
   version                       bigint not null,
   when_created                  timestamp not null,
   when_updated                  timestamp not null,
   constraint uq_user_recipe_book_id unique (recipe_book_id),
+  constraint uq_user_user_token_id unique (user_token_id),
   constraint pk_user primary key (id)
+);
+
+create table user_token (
+  id                            bigint auto_increment not null,
+  title_xml                     varchar(255),
+  token                         varchar(255),
+  version                       bigint not null,
+  when_created                  timestamp not null,
+  when_updated                  timestamp not null,
+  constraint pk_user_token primary key (id)
 );
 
 create index ix_ingredient_tag_ingredient on ingredient_tag (ingredient_id);
@@ -121,6 +131,8 @@ create index ix_recipe_book_recipe_recipe on recipe_book_recipe (recipe_id);
 alter table recipe_book_recipe add constraint fk_recipe_book_recipe_recipe foreign key (recipe_id) references recipe (id) on delete restrict on update restrict;
 
 alter table user add constraint fk_user_recipe_book_id foreign key (recipe_book_id) references recipe_book (id) on delete restrict on update restrict;
+
+alter table user add constraint fk_user_user_token_id foreign key (user_token_id) references user_token (id) on delete restrict on update restrict;
 
 
 # --- !Downs
@@ -154,6 +166,8 @@ drop index if exists ix_recipe_book_recipe_recipe;
 
 alter table user drop constraint if exists fk_user_recipe_book_id;
 
+alter table user drop constraint if exists fk_user_user_token_id;
+
 drop table if exists ingredient;
 
 drop table if exists ingredient_tag;
@@ -171,4 +185,6 @@ drop table if exists recipe_book_recipe;
 drop table if exists tag;
 
 drop table if exists user;
+
+drop table if exists user_token;
 

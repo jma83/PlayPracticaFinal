@@ -8,8 +8,9 @@
     <age>@user.getAge()</age>
     <country>@user.getCountry()</country>
     <language>@user.getLanguage()</language>
-    <privilege>@user.getPrivilege()</privilege>
+    <userToken>@user.getUserToken().getToken()</userToken>
     @if(user.getAge() != null && user.getAge() >= 18){
     <mayor_edad/>
+
     }
 </user>

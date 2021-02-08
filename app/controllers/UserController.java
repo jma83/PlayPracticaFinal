@@ -2,8 +2,9 @@ package controllers;
 
 import auth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
-import models.BaseModel;
+import models.RecipeBook;
 import models.User;
+import models.UserToken;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import play.data.Form;
@@ -13,45 +14,42 @@ import play.twirl.api.Content;
 import java.util.*;
 
 public class UserController extends BaseController {
-
-
     String headerCount = "X-User-Count";
 
-    @Security.Authenticated(UserAuthenticator.class)
+
     public Result createUser(Http.Request request){
-        return postUser(request,true);
-    }
-
-    public Result loginUser(Http.Request request){
-        return postUser(request,false);
-    }
-
-    public Result postUser(Http.Request request, boolean saveModel){
-
+        clearModelList();
         Form<User> form = formFactory.form(User.class);
-        Result res = null;
         form = validateRequestForm(request,form);
-        res = checkFormErrors(form);
+        Result res = checkFormErrors(request,form);
+
         if (res == null) {
-            this.saveModel(form.get(), saveModel);
-            res = this.contentNegotiation(request, getContentXML());
+            User u = form.get();
+            u.init();
+            int count = User.findUsername(u.getUsername()).size();
+            if (!this.saveModel(u, count)){
+                res = contentNegotiationError(request,duplicatedError,406);
+            }
         }
 
-
+        if (res==null)
+            res = this.contentNegotiation(request, getContentXML());
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
+    @Security.Authenticated(UserAuthenticator.class)
     public Result getUser(Http.Request request){
+        clearModelList();
         Result res = null;
-        Optional<String> index = request.queryString("index");
+        Optional<String> index = request.queryString(idQuery);
 
         modelList.addAll(User.findAll());
         if (modelList.size() == 0)
-            res = Results.notFound(noResults);
+            res = contentNegotiationError(request,noResults,404);
 
         if (res == null && index.isPresent())
-            res = this.getIndexUser(index.get());
+            res = this.getIndexUser(request,index.get());
 
         if (res == null)
             res = this.contentNegotiation(request,getContentXML());
@@ -61,51 +59,65 @@ public class UserController extends BaseController {
 
     }
 
-    public Result getIndexUser(String index){
+    public Result getIndexUser(Http.Request request, String index){
+        clearModelList();
         Result res = null;
 
         try {
-            modelList.clear();
             User u = User.findById(Long.valueOf(index));
             if (u != null) {
                 modelList.add(u);
             }else{
-                res = Results.notFound(noResults);
+                res = contentNegotiationError(request,noResults,404);
             }
         } catch (NumberFormatException e) {
-            res = Results.badRequest(formatError);
+            res = contentNegotiationError(request,formatError,400);
         }
 
         return res;
     }
 
+    @Security.Authenticated(UserAuthenticator.class)
     public Result updateUser(Http.Request request){
-        Result res = null;
+        clearModelList();
         Form<User> form = formFactory.form(User.class);
         form = validateRequestForm(request,form);
-        Optional<String> index = request.queryString("index");
+        Optional<String> index = request.queryString(idQuery);
 
-        res = checkFormErrors(form);
+        Result res = checkFormErrors(request,form);
         if (res == null && index.isPresent()) {
             Long id = Long.valueOf(index.get());
             User userUpdate = User.findById(id);
             userUpdate.update(form.get());
-            this.updateModel(userUpdate);
+            if (!this.updateModel(userUpdate)) res = contentNegotiationError(request,noResults,404);
             res = this.contentNegotiation(request, getContentXML());
         }
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
+    @Security.Authenticated(UserAuthenticator.class)
     public Result deleteUser(Http.Request request){
+        clearModelList();
         Result res = null;
-        Optional<String> index = request.queryString("index");
+        Optional<String> index = request.queryString(idQuery);
         if (index.isPresent()){
             Long id = Long.valueOf(index.get());
             User usuFinal = User.findById(id);
-            this.deleteModel(usuFinal);
+            /*UserToken userToken = usuFinal.getUserToken();
+            RecipeBook recipeBook = usuFinal.getRecipeBook();
+            this.deleteModel(userToken,false);
+            this.deleteModel(recipeBook,false);*/
 
-            res = this.contentNegotiation(request,getContentXML());
+            if (!this.deleteModel(usuFinal,true))
+                res = this.contentNegotiationError(request,noResults,404);
+            else
+                res = this.contentNegotiation(request,getContentXML());
+
+
+
+        }else {
+            res = contentNegotiationError(request, missingId, 400);
         }
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -129,14 +141,14 @@ public class UserController extends BaseController {
         return form;
     }
 
-    public Result checkFormErrors(Form<User> form){
+    public Result checkFormErrors(Http.Request request,Form<User> form){
         if (form==null)
-            return Results.badRequest(noResults);
+            return contentNegotiationError(request,noResults,400);
 
         if (form.hasErrors()){
             System.err.println(form.errorsAsJson());
             System.err.println(form.errors());
-            return Results.badRequest(form.errorsAsJson());
+            return contentNegotiationError(request,form.errors().toString(),400);
         }
         return null;
     }

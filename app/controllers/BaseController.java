@@ -3,6 +3,7 @@ package controllers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import models.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -23,6 +24,7 @@ import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -32,7 +34,10 @@ public class BaseController extends Controller {
     FormFactory formFactory;
     List<BaseModel> modelList = new ArrayList<>();
     String noResults = "No results!";
-    String formatError = "Error, incorrect format";
+    final String formatError = "Error, incorrect format";
+    final String missingId = "Error, missing id";
+    final String duplicatedError = "Error, Duplicated register";
+    String idQuery = "id";
 
     public List<BaseModel> createWithXML(NodeList modelNode,Object instance){
         List<BaseModel> models = new ArrayList<>();
@@ -122,6 +127,7 @@ public class BaseController extends Controller {
 
             res = Results.ok(content);
         }else if (request.accepts("application/json")) {
+            //https://grokonez.com/json/resolve-json-infinite-recursion-problems-working-jackson
             ObjectMapper mapper = new ObjectMapper();
             try {
                 String result = mapper.writeValueAsString(modelList);
@@ -131,35 +137,64 @@ public class BaseController extends Controller {
             }
 
         }else{
-            res = Results.badRequest();
+            res = Results.badRequest("Unsupported format");
         }
-        modelList.clear();
 
         return res;
     }
 
-    public void saveModel(Object modelType, boolean save){
+    public Result contentNegotiationError(Http.Request request, String errorMsg, Integer status){
+        Result res = null;
+        if (request.accepts("application/xml")){
+            Content content = views.xml.Error._error.render(errorMsg);
+            res = Results.status(status,content);
+        }else if (request.accepts("application/json")) {
+            ObjectNode objectNode = Json.newObject();
+            objectNode.put("Error",errorMsg);
+            res = Results.status(status,objectNode);
+        }else{
+            res = Results.status(status,errorMsg);
+        }
+        return res;
+
+    }
+
+
+    public boolean saveModel(Object modelType, int count) {
+        if (count != 0) return false;
+
+        if (modelType!=null){
             BaseModel bm = (BaseModel) modelType;
-            if (save)
-                bm.save();
-
             modelList.add(bm);
-            System.out.println("Model inserted: " + modelType);
-
+            bm.save();
+            return true;
+        }
+        return false;
     }
 
-    public void updateModel(Object modelType){
-        BaseModel modelUpdate = (BaseModel) modelType;
-        modelList.add(modelUpdate);
-        modelUpdate.update();
+    public boolean updateModel(Object modelType){
+        if (modelType!=null) {
+            BaseModel modelUpdate = (BaseModel) modelType;
+            modelList.add(modelUpdate);
+            modelUpdate.update();
+            return true;
+        }
+        return false;
     }
 
-    public void deleteModel(Object modelType){
-        BaseModel modelDelete = (BaseModel) modelType;
-        this.modelList.add(modelDelete);
-        modelDelete.delete();
+    public boolean deleteModel(Object modelType, boolean add){
+        if (modelType!=null) {
+            BaseModel modelDelete = (BaseModel) modelType;
+            if (add) this.modelList.add(modelDelete);
+            modelDelete.delete();
+            return true;
+        }
+        return false;
     }
 
+    public void clearModelList(){
+        modelList.clear();
+    }
 
     public String getTextNode(Element e) {
         return e.getChildNodes().item(0).getNodeValue();

@@ -12,25 +12,29 @@ import java.util.Locale;
 
 public class BirthdateValidator extends Constraints.Validator<Date> implements ConstraintValidator<Birthdate,Date> {
     F.Tuple<String, Object[]> errorMessage;
-    private static final String DATE_PATTERN = "dd/MM/yyyy";
-
-
+    private static final String DATE_PATTERN = "yyyy-MM-dd";
 
 
     @Override
     public boolean isValid(Date object) {
+        return false;
+    }
 
-        SimpleDateFormat formatter = new SimpleDateFormat(DATE_PATTERN);
-        //String elpepe = formatter.format(object);
+    @Override
+    public boolean isValid(Date object, javax.validation.ConstraintValidatorContext constraintContext) {
+
         if (object==null || "".equals(object)) {
-            System.err.println("Birthdate can't be empty or null");
-            errorMessage = new F.Tuple<>("Birthdate can't be empty or null", new Object[]{object});
+            //System.err.println("Birthdate can't be empty or null");
+            System.err.println(object);
+            constraintContext.disableDefaultConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Birthdate can't be empty or null").addConstraintViolation();
             return false;
         }
 
         if (object.toString().length() < 10) {
-            System.err.println("Birthdate must follow the format: dd/MM/yyyy");
-            errorMessage = new F.Tuple<>("Birthdate must follow the format: dd/MM/yyyy", new Object[]{object});
+            //System.err.println("Birthdate must follow the format: yyyy-MM-dd");
+            constraintContext.disableDefaultConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Birthdate must follow the format: yyyy-MM-dd").addConstraintViolation();
             return false;
         }
         Date d2 = new Date();
@@ -39,14 +43,16 @@ public class BirthdateValidator extends Constraints.Validator<Date> implements C
         int diff = b.get(Calendar.YEAR) - a.get(Calendar.YEAR);
 
         if (diff < 0){
-            System.err.println("Birthdate must be greater than the current one");
-            errorMessage = new F.Tuple<>("Birthdate must be greater than the current one", new Object[]{object});
+            //System.err.println("Birthdate can't be greater than the current one");
+            constraintContext.disableDefaultConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Birthdate must be greater than the current one").addConstraintViolation();
             return false;
         }
 
         if (diff < 18){
-            System.err.println("Birthdate must be greater than 18 years");
-            errorMessage = new F.Tuple<>("Birthdate must be greater than 18 years", new Object[]{object});
+            //System.err.println("Birthdate must be greater or equal to 18 years");
+            constraintContext.disableDefaultConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Birthdate must be greater than 18 years").addConstraintViolation();
             return false;
         }
 
@@ -61,7 +67,7 @@ public class BirthdateValidator extends Constraints.Validator<Date> implements C
 
     @Override
     public F.Tuple<String, Object[]> getErrorMessageKey() {
-        return errorMessage;
+        return null;
     }
 
     @Override

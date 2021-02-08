@@ -6,22 +6,33 @@ import javax.validation.ConstraintValidator;
 
 public class UsernameValidator extends Validator<String> implements ConstraintValidator<Username,String> {
     F.Tuple<String, Object[]> errorMessage;
+
     @Override
     public boolean isValid(String object) {
+        return false;
+    }
+
+    @Override
+    public boolean isValid(String object, javax.validation.ConstraintValidatorContext constraintContext) {
         if (object==null || "".equals(object)) {
-            errorMessage = new F.Tuple<>("Username can't be empty or null", new Object[]{object});
+            constraintContext.disableDefaultConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Username can't be empty or null").addConstraintViolation();
+
             return false;
         }
         if (object.contains(" ")){
-            errorMessage = new F.Tuple<>("Username can't contain whitespaces", new Object[]{object});
+            constraintContext.disableDefaultConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Username can't contain whitespaces").addConstraintViolation();
             return false;
         }
         if (object.length() < 2 || object.length() > 20) {
-            errorMessage = new F.Tuple<>("Username must be between 2 and 20 characters", new Object[]{object});
+            constraintContext.disableDefaultConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Username must be between 2 and 20 characters").addConstraintViolation();
             return false;
         }
         if (!StringUtils.isAlphanumeric(object)){
-            errorMessage = new F.Tuple<>("Username must only have alphanumeric characters", new Object[]{object});
+            constraintContext.disableDefaultConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Username must only have alphanumeric characters").addConstraintViolation();
             return false;
         }
 

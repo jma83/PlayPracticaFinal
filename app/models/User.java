@@ -1,13 +1,12 @@
 package models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.springframework.format.annotation.DateTimeFormat;
+import io.ebean.ExpressionList;
 import play.data.format.Formats;
 import play.data.validation.Constraints.*;
 
 import io.ebean.Finder;
 import validators.Birthdate;
-import validators.Password;
 import validators.Username;
 
 import javax.persistence.CascadeType;
@@ -15,9 +14,13 @@ import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.validation.Valid;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 
 @Entity
@@ -29,16 +32,12 @@ public class User extends BaseModel {
     @Email
     String email;
     @Birthdate
+    @Formats.DateTime(pattern = "yyyy-MM-dd")
     Date birthdate;
     @JsonIgnore
     Integer age;
     String country = null;
     String language = null;
-    Integer privilege = 0;
-
-    @JsonIgnore
-    //@Password
-    String password = null;
 
 
     @JsonIgnore
@@ -47,6 +46,9 @@ public class User extends BaseModel {
     @OneToOne(cascade = CascadeType.ALL)
     @Valid
     public RecipeBook recipeBook;
+    @OneToOne(cascade = CascadeType.ALL)
+    @Valid
+    public UserToken userToken;
 
     @JsonIgnore
     public static final Finder<Long,User> find = new Finder<>(User.class);
@@ -56,6 +58,10 @@ public class User extends BaseModel {
     }
     public static User findById(long id){
         return find.byId(id);
+    }
+
+    public static List<User> findUsername(String user){
+        return find.query().where().eq("username", user).findList();
     }
 
 
@@ -72,7 +78,7 @@ public class User extends BaseModel {
         this.age = age;
         this.country = country;
         this.language = language;
-        this.privilege = privilege;
+        this.userToken = new UserToken(username);
 
     }
 
@@ -94,14 +100,6 @@ public class User extends BaseModel {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public Integer getPrivilege() {
-        return privilege;
-    }
-
-    public void setPrivilege(Integer privilege) {
-        this.privilege = privilege;
     }
 
     public String getEmail() {
@@ -128,13 +126,23 @@ public class User extends BaseModel {
         this.age = age;
     }
 
+    public void setAge() {
+        //https://www.baeldung.com/java-date-difference
+        if (this.birthdate != null) {
+            Date date2 = new Date();
+            long diffInMillies = Math.abs(this.birthdate.getTime() - date2.getTime());
+            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+            this.age = Math.toIntExact(diff / 365);
+        }
+
+    }
+
     public void update(User u){
         this.setAge(u.getAge());
         this.setBirthdate(u.getBirthdate());
         this.setCountry(u.getCountry());
         this.setEmail(u.getEmail());
         this.setLanguage(u.getLanguage());
-        this.setPrivilege(u.getPrivilege());
         this.setUsername(u.getUsername());
     }
 
@@ -154,13 +162,29 @@ public class User extends BaseModel {
         this.language = language;
     }
 
-    public boolean checkLogin(String username, String password){
-        if (username.equals(this.username) && password.equals(this.password)){
-            return true;
-        }
-        return false;
+    public RecipeBook getRecipeBook() {
+        return recipeBook;
     }
 
+    public void setRecipeBook(RecipeBook recipeBook) {
+        this.recipeBook = recipeBook;
+    }
 
+    public UserToken getUserToken() {
+        return userToken;
+    }
+
+    public void setUserToken(UserToken userToken) {
+        this.userToken = userToken;
+    }
+
+    public void setUserToken(){
+        this.userToken = new UserToken(this.username);
+    }
+
+    public void init() {
+        setAge();
+        setUserToken();
+    }
 }
 
