@@ -25,7 +25,7 @@ public class NameValidator extends Constraints.Validator<String> implements Cons
             constraintContext.buildConstraintViolationWithTemplate("Name must be between 2 and 30 characters").addConstraintViolation();
             return false;
         }
-        if (!StringUtils.checkNameFormat(object)){
+        if (StringUtils.checkNameFormat(object)){
             constraintContext.disableDefaultConstraintViolation();
             constraintContext.buildConstraintViolationWithTemplate("Invalid name format").addConstraintViolation();
             return false;

@@ -1,6 +1,8 @@
 package controllers;
 
+import auth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
+import models.Ingredient;
 import models.Ingredient;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -8,6 +10,7 @@ import play.data.Form;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
+import play.mvc.Security;
 import play.twirl.api.Content;
 
 import java.util.Arrays;
@@ -15,115 +18,124 @@ import java.util.Optional;
 
 public class IngredientController extends BaseController {
 
-    String noResults = "Sin resultados!";
-    String formatError = "Error formato no numerico";
     String headerCount = "X-Ingredient-Count";
 
+
     public Result createIngredient(Http.Request request){
-        Result res = null;
-        Form<Ingredient> form = null;
-        Ingredient ingredient = new Ingredient();
+        clearModelList();
+        Form<Ingredient> form = formFactory.form(Ingredient.class);
+        form = validateRequestForm(request,form);
+        Result res = checkFormErrors(request,form);
 
-        Document doc = request.body().asXml();
-        JsonNode json = request.body().asJson();
-
-        if (doc != null){
-            NodeList modelNode = doc.getElementsByTagName(ingredient.getTitleXML());
-            Ingredient i = (Ingredient) createWithXML(modelNode,ingredient).get(0);
-            form = formFactory.form(Ingredient.class).fill(i);
-        }else if (json != null){
-            form = formFactory.form(Ingredient.class).bindFromRequest(request);
-        }else{
-            res = Results.badRequest(noResults);
+        if (res == null) {
+            Ingredient i = form.get();
+            //r.init();
+            if (!saveModel(i, 0)){
+                res = contentNegotiationError(request,duplicatedError,406);
+            }
         }
-
-        ingredient = form.get();
-        if (form.hasErrors()){
-            System.err.println(form.errorsAsJson());
-            res = Results.badRequest(form.errorsAsJson());
-        }
-
-        ingredient.save();
-        modelList.add(ingredient);
-        System.out.println("Ingredient inserted: " + ingredient);
-
 
         if (res==null)
-            res = this.contentNegotiation(request,getContentXML());
+            res = contentNegotiation(request, getContentXML());
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
+    @Security.Authenticated(UserAuthenticator.class)
     public Result getIngredient(Http.Request request){
+        clearModelList();
         Result res = null;
-        Optional<String> index = request.queryString("index");
+        Optional<String> index = request.queryString(idQuery);
 
         modelList.addAll(Ingredient.findAll());
         if (modelList.size() == 0)
-            res = Results.notFound(noResults);
+            res = contentNegotiationError(request,noResults,404);
 
-        if (index.isPresent() && res==null)
-            res = this.getIndexIngredient(index.get());
+        if (res == null && index.isPresent())
+            res = getIndexIngredient(request,index.get());
 
         if (res == null)
-            res = this.contentNegotiation(request,getContentXML());
+            res = contentNegotiation(request,getContentXML());
 
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
 
     }
 
-    public Result getIndexIngredient(String index){
+    public Result getIndexIngredient(Http.Request request, String index){
+        clearModelList();
         Result res = null;
 
-        System.out.println(index);
-        modelList.clear();
         try {
-            Ingredient i = Ingredient.findById(Integer.parseInt(index));
+            Ingredient i = Ingredient.findById(Long.valueOf(index));
             if (i != null) {
                 modelList.add(i);
             }else{
-                res = Results.notFound(noResults);
+                res = contentNegotiationError(request,noResults,404);
             }
         } catch (NumberFormatException e) {
-            res = Results.badRequest(formatError);
+            res = contentNegotiationError(request,formatError,400);
         }
 
         return res;
     }
 
+    @Security.Authenticated(UserAuthenticator.class)
     public Result updateIngredient(Http.Request request){
-        Result res = null;
-        Form<Ingredient> form = formFactory.form(Ingredient.class).bindFromRequest(request);
-        Optional<String> index = request.queryString("index");
-        Ingredient ingredient = form.get();
-        if (form.hasErrors()){
-            System.err.println(form.errorsAsJson());
-            res = Results.badRequest(form.errorsAsJson());
-        }
-        if (ingredient != null && res == null && index.isPresent()){
+        clearModelList();
+        Form<Ingredient> form = formFactory.form(Ingredient.class);
+        form = validateRequestForm(request,form);
+        Optional<String> index = request.queryString(idQuery);
+
+        Result res = checkFormErrors(request,form);
+        if (res == null && index.isPresent()) {
             Long id = Long.valueOf(index.get());
             Ingredient ingredientUpdate = Ingredient.findById(id);
-            ingredientUpdate.update(ingredient);
-            modelList.add(ingredientUpdate);
-            ingredientUpdate.update();
-            res = this.contentNegotiation(request,getContentXML());
+            ingredientUpdate.update(form.get());
+            if (!updateModel(ingredientUpdate))
+                res = contentNegotiationError(request,noResults,404);
+            else
+                res = contentNegotiation(request, getContentXML());
+        }
+
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
+    }
+
+    @Security.Authenticated(UserAuthenticator.class)
+    public Result deleteIngredient(Http.Request request){
+        clearModelList();
+        Result res = null;
+        Optional<String> index = request.queryString(idQuery);
+        if (index.isPresent()){
+            Long id = Long.valueOf(index.get());
+            Ingredient ingrFinal = Ingredient.findById(id);
+
+            if (!deleteModel(ingrFinal,true))
+                res = contentNegotiationError(request,noResults,404);
+            else
+                res = contentNegotiation(request,getContentXML());
+
+        }else {
+            res = contentNegotiationError(request, missingId, 400);
         }
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
-    public Result deleteIngredient(Http.Request request){
-        Result res = null;
-        Optional<String> index = request.queryString("index");
-        if (index.isPresent()){
-            Long id = Long.valueOf(index.get());
-            Ingredient ingrFinal = Ingredient.findById(id);
-            this.modelList.add(ingrFinal);
-            ingrFinal.delete();
+    public Form<Ingredient> validateRequestForm(Http.Request request, Form<Ingredient> form){
+        Ingredient ingredient = new Ingredient();
+        Document doc = request.body().asXml();
+        JsonNode json = request.body().asJson();
 
-            res = this.contentNegotiation(request,getContentXML());
+        if (doc != null){
+            NodeList modelNode = doc.getElementsByTagName(ingredient.getTitleXML());
+            form.fill((Ingredient) createWithXML(modelNode,ingredient).get(0));
+        }else if (json != null){
+            form = form.bindFromRequest(request);
+        }else{
+            form = null;
         }
-        return res.withHeader(headerCount,String.valueOf(modelList.size()));
+
+        return form;
     }
 
     public Content getContentXML(){

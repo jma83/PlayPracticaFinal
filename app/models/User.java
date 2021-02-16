@@ -47,7 +47,7 @@ public class User extends BaseModel {
     @Valid
     public RecipeBook recipeBook;
     @OneToOne(cascade = CascadeType.ALL)
-    @Valid
+//    @JsonIgnore
     public UserToken userToken;
 
     @JsonIgnore

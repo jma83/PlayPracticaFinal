@@ -159,6 +159,18 @@ public class BaseController extends Controller {
 
     }
 
+    public Result checkFormErrors(Http.Request request,Form<? extends BaseModel> form){
+        if (form==null)
+            return contentNegotiationError(request,noResults,400);
+
+        if (form.hasErrors()){
+            System.err.println(form.errorsAsJson());
+            System.err.println(form.errors());
+            return contentNegotiationError(request,form.errors().toString(),400);
+        }
+        return null;
+    }
+
 
     public boolean saveModel(Object modelType, int count) {
         if (count != 0) return false;

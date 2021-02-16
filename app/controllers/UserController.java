@@ -2,9 +2,7 @@ package controllers;
 
 import auth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
-import models.RecipeBook;
 import models.User;
-import models.UserToken;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import play.data.Form;
@@ -27,13 +25,13 @@ public class UserController extends BaseController {
             User u = form.get();
             u.init();
             int count = User.findUsername(u.getUsername()).size();
-            if (!this.saveModel(u, count)){
+            if (!saveModel(u, count)){
                 res = contentNegotiationError(request,duplicatedError,406);
             }
         }
 
         if (res==null)
-            res = this.contentNegotiation(request, getContentXML());
+            res = contentNegotiation(request, getContentXML());
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -49,10 +47,10 @@ public class UserController extends BaseController {
             res = contentNegotiationError(request,noResults,404);
 
         if (res == null && index.isPresent())
-            res = this.getIndexUser(request,index.get());
+            res = getIndexUser(request,index.get());
 
         if (res == null)
-            res = this.contentNegotiation(request,getContentXML());
+            res = contentNegotiation(request,getContentXML());
 
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
@@ -89,8 +87,10 @@ public class UserController extends BaseController {
             Long id = Long.valueOf(index.get());
             User userUpdate = User.findById(id);
             userUpdate.update(form.get());
-            if (!this.updateModel(userUpdate)) res = contentNegotiationError(request,noResults,404);
-            res = this.contentNegotiation(request, getContentXML());
+            if (!updateModel(userUpdate))
+                res = contentNegotiationError(request,noResults,404);
+            else
+                res = contentNegotiation(request, getContentXML());
         }
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
@@ -106,15 +106,13 @@ public class UserController extends BaseController {
             User usuFinal = User.findById(id);
             /*UserToken userToken = usuFinal.getUserToken();
             RecipeBook recipeBook = usuFinal.getRecipeBook();
-            this.deleteModel(userToken,false);
-            this.deleteModel(recipeBook,false);*/
+            deleteModel(userToken,false);
+            deleteModel(recipeBook,false);*/
 
-            if (!this.deleteModel(usuFinal,true))
-                res = this.contentNegotiationError(request,noResults,404);
+            if (!deleteModel(usuFinal,true))
+                res = contentNegotiationError(request,noResults,404);
             else
-                res = this.contentNegotiation(request,getContentXML());
-
-
+                res = contentNegotiation(request,getContentXML());
 
         }else {
             res = contentNegotiationError(request, missingId, 400);
@@ -137,21 +135,9 @@ public class UserController extends BaseController {
             form = null;
         }
 
-
         return form;
     }
 
-    public Result checkFormErrors(Http.Request request,Form<User> form){
-        if (form==null)
-            return contentNegotiationError(request,noResults,400);
-
-        if (form.hasErrors()){
-            System.err.println(form.errorsAsJson());
-            System.err.println(form.errors());
-            return contentNegotiationError(request,form.errors().toString(),400);
-        }
-        return null;
-    }
 
     public Content getContentXML(){
         User[] array = new User[modelList.size()];
