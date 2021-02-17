@@ -2,7 +2,7 @@ package validators;
 
 public class StringUtils {
     //https://mkyong.com/regular-expressions/java-regex-check-alphanumeric-string/
-    private static final String ALPHANUMERIC_PATTERN = "^[a-zA-Z0-9_]+$";
+    private static final String ALPHANUMERIC_PATTERN = "^[a-zA-Z0-9_ ]+$";
 
     public static boolean isAlphanumeric(final String input) {
         return input.matches(ALPHANUMERIC_PATTERN);

@@ -25,7 +25,7 @@ public class DescriptionValidator extends Constraints.Validator<String> implemen
             constraintContext.buildConstraintViolationWithTemplate("Description must be between 2 and 150 characters").addConstraintViolation();
             return false;
         }
-        if (!StringUtils.checkNameFormat(object)){
+        if (!StringUtils.isAlphanumeric(object)){
             constraintContext.disableDefaultConstraintViolation();
             constraintContext.buildConstraintViolationWithTemplate("Invalid description format").addConstraintViolation();
             return false;

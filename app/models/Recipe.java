@@ -37,11 +37,9 @@ public class Recipe extends BaseModel {
     String description;
     @BoolVal({true, false})
     Boolean visibility = true;
-    @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
     @Valid
     List<Tag> tagList = new ArrayList<>();
-    @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
     @Valid
     public List<Ingredient> ingredientList = new ArrayList<>();
@@ -140,5 +138,16 @@ public class Recipe extends BaseModel {
         this.author = recipe.getAuthor();
         this.visibility = recipe.getVisibility();
         this.tagList = recipe.getTagList();
+    }
+
+    public boolean checkIngredient(Ingredient ingredient){
+        Boolean check = false;
+        for (Ingredient i:ingredientList) {
+            if (i.getName().equals(ingredient.getName())){
+                check = true;
+                break;
+            }
+        }
+        return check;
     }
 }

@@ -25,6 +25,9 @@ public class Ingredient extends BaseModel {
     public static Ingredient findById(long id){
         return find.byId(id);
     }
+    public static List<Ingredient> findByName(String name){
+        return find.query().where().eq("name", name).findList();
+    }
 
     @Required
     @Name
@@ -61,9 +64,7 @@ public class Ingredient extends BaseModel {
         this.recipeList = recipeList;
     }
 
-    public static String getTitle(){
-        return "ingredient";
-    }
+
 
     public String getName() {
         return name;

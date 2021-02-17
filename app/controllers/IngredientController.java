@@ -3,13 +3,11 @@ package controllers;
 import auth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
 import models.Ingredient;
-import models.Ingredient;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import play.data.Form;
 import play.mvc.Http;
 import play.mvc.Result;
-import play.mvc.Results;
 import play.mvc.Security;
 import play.twirl.api.Content;
 

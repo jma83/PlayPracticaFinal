@@ -8,6 +8,7 @@ PUT /user controllers.UserController.updateUser(request: Request)
 DELETE /user controllers.UserController.deleteUser(request: Request)
 
 POST /recipe controllers.RecipeController.createRecipe(request: Request)
+POST /recipe/:id controllers.RecipeController.addIngredient(request: Request, id: Long)
 GET /recipe controllers.RecipeController.getRecipe(request: Request)
 PUT /recipe controllers.RecipeController.updateRecipe(request: Request)
 DELETE /recipe controllers.RecipeController.deleteRecipe(request: Request)

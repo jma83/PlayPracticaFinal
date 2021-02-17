@@ -2,7 +2,6 @@ package controllers;
 
 import auth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
-import models.BaseModel;
 import models.Ingredient;
 import models.Recipe;
 import org.w3c.dom.Document;
@@ -13,7 +12,6 @@ import play.mvc.Result;
 import play.mvc.Security;
 import play.twirl.api.Content;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 public class RecipeController extends BaseController {
@@ -43,13 +41,13 @@ public class RecipeController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result addIngredient(Http.Request request){
+    public Result addIngredient(Http.Request request, Long id){
         clearModelList();
         Result res = null;
-        Optional<String> id = request.queryString(idQuery);
+        //Optional<String> in = request.queryString(idQuery);
 
-        if (id.isPresent()){
-            res = getIndexRecipe(request,id.get());
+        if (id > 0){
+            res = getIndexRecipe(request,id);
             if (res == null && modelList.size() == 1){
                 Recipe recipe = (Recipe) modelList.get(0);
                 IngredientController ingredientController = new IngredientController();
@@ -57,12 +55,27 @@ public class RecipeController extends BaseController {
                 form = ingredientController.validateRequestForm(request,form);
                 res = ingredientController.checkFormErrors(request,form);
                 if (res == null){
+                    Ingredient ingredient = form.get();
+                    if (!recipe.checkIngredient(ingredient)) {
+                        recipe.ingredientList.add(ingredient);
+                        clearModelList();
+                        if (saveModel(recipe, 0)){
+                            res = contentNegotiation(request, getContentXML());
+                        }
+                    }
+                    if (res == null)
+                        res = contentNegotiationError(request,duplicatedError,406);
 
                 }
+                if (res == null)
+                    contentNegotiationError(request,formatError,400);
+
             }
-
-
         }
+
+        if (res == null)
+            res = contentNegotiationError(request,noResults,404);
+
 
         return res;
     }
@@ -78,7 +91,7 @@ public class RecipeController extends BaseController {
             res = contentNegotiationError(request,noResults,404);
 
         if (res == null && index.isPresent())
-            res = getIndexRecipe(request,index.get());
+            res = getIndexRecipe(request,Long.valueOf(index.get()));
 
         if (res == null)
             res = contentNegotiation(request,getContentXML());
@@ -88,12 +101,12 @@ public class RecipeController extends BaseController {
 
     }
 
-    public Result getIndexRecipe(Http.Request request, String index){
+    public Result getIndexRecipe(Http.Request request, Long index){
         clearModelList();
         Result res = null;
 
         try {
-            Recipe r = Recipe.findById(Long.valueOf(index));
+            Recipe r = Recipe.findById(index);
             if (r != null) {
                 modelList.add(r);
             }else{
