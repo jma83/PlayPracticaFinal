@@ -40,14 +40,10 @@ public class UserController extends BaseController {
     public Result getUser(Http.Request request){
         clearModelList();
         Result res = null;
-        Optional<String> index = request.queryString(idQuery);
 
         modelList.addAll(User.findAll());
         if (modelList.size() == 0)
             res = contentNegotiationError(request,noResults,404);
-
-        if (res == null && index.isPresent())
-            res = getIndexUser(request,index.get());
 
         if (res == null)
             res = contentNegotiation(request,getContentXML());
@@ -57,34 +53,33 @@ public class UserController extends BaseController {
 
     }
 
-    public Result getIndexUser(Http.Request request, String index){
+    public Result getUserId(Http.Request request, Long id){
         clearModelList();
         Result res = null;
 
         try {
-            User u = User.findById(Long.valueOf(index));
+            User u = User.findById(id);
             if (u != null) {
                 modelList.add(u);
+                res = contentNegotiation(request,getContentXML());
             }else{
                 res = contentNegotiationError(request,noResults,404);
             }
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             res = contentNegotiationError(request,formatError,400);
         }
 
-        return res;
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result updateUser(Http.Request request){
+    public Result updateUser(Http.Request request, Long id){
         clearModelList();
         Form<User> form = formFactory.form(User.class);
         form = validateRequestForm(request,form);
-        Optional<String> index = request.queryString(idQuery);
 
         Result res = checkFormErrors(request,form);
-        if (res == null && index.isPresent()) {
-            Long id = Long.valueOf(index.get());
+        if (res == null && id != null && id > 0) {
             User userUpdate = User.findById(id);
             userUpdate.update(form.get());
             if (!updateModel(userUpdate))
@@ -97,12 +92,10 @@ public class UserController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result deleteUser(Http.Request request){
+    public Result deleteUser(Http.Request request, Long id){
         clearModelList();
         Result res = null;
-        Optional<String> index = request.queryString(idQuery);
-        if (index.isPresent()){
-            Long id = Long.valueOf(index.get());
+        if (id != null && id > 0){
             User usuFinal = User.findById(id);
             /*UserToken userToken = usuFinal.getUserToken();
             RecipeBook recipeBook = usuFinal.getRecipeBook();
@@ -111,12 +104,14 @@ public class UserController extends BaseController {
 
             if (!deleteModel(usuFinal,true))
                 res = contentNegotiationError(request,noResults,404);
-            else
-                res = contentNegotiation(request,getContentXML());
 
         }else {
             res = contentNegotiationError(request, missingId, 400);
         }
+        if(res == null){
+            res = contentNegotiation(request,getContentXML());
+        }
+
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 

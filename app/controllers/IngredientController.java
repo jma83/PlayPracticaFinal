@@ -12,7 +12,7 @@ import play.mvc.Security;
 import play.twirl.api.Content;
 
 import java.util.Arrays;
-import java.util.Optional;
+import java.util.List;
 
 public class IngredientController extends BaseController {
 
@@ -28,7 +28,8 @@ public class IngredientController extends BaseController {
         if (res == null) {
             Ingredient i = form.get();
             //r.init();
-            if (!saveModel(i, 0)){
+            List<Ingredient> list = Ingredient.findByName(i.getName());
+            if (!saveModel(i, list.size())){
                 res = contentNegotiationError(request,duplicatedError,406);
             }
         }
@@ -43,14 +44,10 @@ public class IngredientController extends BaseController {
     public Result getIngredient(Http.Request request){
         clearModelList();
         Result res = null;
-        Optional<String> index = request.queryString(idQuery);
 
         modelList.addAll(Ingredient.findAll());
         if (modelList.size() == 0)
             res = contentNegotiationError(request,noResults,404);
-
-        if (res == null && index.isPresent())
-            res = getIndexIngredient(request,index.get());
 
         if (res == null)
             res = contentNegotiation(request,getContentXML());
@@ -60,34 +57,33 @@ public class IngredientController extends BaseController {
 
     }
 
-    public Result getIndexIngredient(Http.Request request, String index){
+    public Result getIngredientId(Http.Request request, Long id){
         clearModelList();
         Result res = null;
 
         try {
-            Ingredient i = Ingredient.findById(Long.valueOf(index));
+            Ingredient i = Ingredient.findById(id);
             if (i != null) {
                 modelList.add(i);
+                res = contentNegotiation(request,getContentXML());
             }else{
                 res = contentNegotiationError(request,noResults,404);
             }
         } catch (NumberFormatException e) {
-            res = contentNegotiationError(request,formatError,400);
+            res = contentNegotiationError(request, formatError, 400);
         }
 
-        return res;
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result updateIngredient(Http.Request request){
+    public Result updateIngredient(Http.Request request, Long id){
         clearModelList();
         Form<Ingredient> form = formFactory.form(Ingredient.class);
         form = validateRequestForm(request,form);
-        Optional<String> index = request.queryString(idQuery);
 
         Result res = checkFormErrors(request,form);
-        if (res == null && index.isPresent()) {
-            Long id = Long.valueOf(index.get());
+        if (res == null ) {
             Ingredient ingredientUpdate = Ingredient.findById(id);
             ingredientUpdate.update(form.get());
             if (!updateModel(ingredientUpdate))
@@ -100,16 +96,14 @@ public class IngredientController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result deleteIngredient(Http.Request request){
+    public Result deleteIngredient(Http.Request request, Long id){
         clearModelList();
         Result res = null;
-        Optional<String> index = request.queryString(idQuery);
-        if (index.isPresent()){
-            Long id = Long.valueOf(index.get());
+        if (id > 0){
             Ingredient ingrFinal = Ingredient.findById(id);
 
             if (!deleteModel(ingrFinal,true))
-                res = contentNegotiationError(request,noResults,404);
+                res = contentNegotiationError(request,deleteIngredientError,404);
             else
                 res = contentNegotiation(request,getContentXML());
 

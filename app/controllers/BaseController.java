@@ -34,6 +34,7 @@ public class BaseController extends Controller {
     final String formatError = "Error, incorrect format";
     final String missingId = "Error, missing id";
     final String duplicatedError = "Error, Duplicated register";
+    final String deleteIngredientError = "Error, Can't delete this Ingredient, is being used in one or more Recipes";
     String idQuery = "id";
 
     public List<BaseModel> createWithXML(NodeList modelNode,Object instance){
@@ -117,6 +118,17 @@ public class BaseController extends Controller {
         return finalObj;
     }
 
+    public Result getModel(Http.Request request, BaseController bm){
+        Result res = null;
+        if (modelList.size() == 0)
+            res = contentNegotiationError(request,noResults,404);
+
+        if (res == null)
+            res = contentNegotiation(request,bm.getContentXML());
+
+        return res;
+    }
+
     public Result contentNegotiation(Http.Request request, Content content){
         Result res = null;
         System.out.println(modelList.size());
@@ -193,10 +205,16 @@ public class BaseController extends Controller {
 
     public boolean deleteModel(Object modelType, boolean add){
         if (modelType!=null) {
-            BaseModel modelDelete = (BaseModel) modelType;
-            if (add) this.modelList.add(modelDelete);
-            modelDelete.delete();
-            return true;
+            try {
+                BaseModel modelDelete = (BaseModel) modelType;
+                if (add) this.modelList.add(modelDelete);
+                modelDelete.delete();
+                return true;
+            }catch (Exception e){
+                System.out.println(e.getMessage());
+                return false;
+            }
+
         }
         return false;
     }
@@ -209,5 +227,8 @@ public class BaseController extends Controller {
         return e.getChildNodes().item(0).getNodeValue();
     }
 
+    public Content getContentXML(){
+        return null;
+    }
 
 }

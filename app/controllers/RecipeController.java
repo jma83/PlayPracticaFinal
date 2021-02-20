@@ -12,6 +12,7 @@ import play.mvc.Result;
 import play.mvc.Security;
 import play.twirl.api.Content;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 public class RecipeController extends BaseController {
@@ -40,58 +41,15 @@ public class RecipeController extends BaseController {
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
-    @Security.Authenticated(UserAuthenticator.class)
-    public Result addIngredient(Http.Request request, Long id){
-        clearModelList();
-        Result res = null;
-        //Optional<String> in = request.queryString(idQuery);
-
-        if (id > 0){
-            res = getIndexRecipe(request,id);
-            if (res == null && modelList.size() == 1){
-                Recipe recipe = (Recipe) modelList.get(0);
-                IngredientController ingredientController = new IngredientController();
-                Form<Ingredient> form = formFactory.form(Ingredient.class);
-                form = ingredientController.validateRequestForm(request,form);
-                res = ingredientController.checkFormErrors(request,form);
-                if (res == null){
-                    Ingredient ingredient = form.get();
-                    if (!recipe.checkIngredient(ingredient)) {
-                        recipe.ingredientList.add(ingredient);
-                        clearModelList();
-                        if (saveModel(recipe, 0)){
-                            res = contentNegotiation(request, getContentXML());
-                        }
-                    }
-                    if (res == null)
-                        res = contentNegotiationError(request,duplicatedError,406);
-
-                }
-                if (res == null)
-                    contentNegotiationError(request,formatError,400);
-
-            }
-        }
-
-        if (res == null)
-            res = contentNegotiationError(request,noResults,404);
-
-
-        return res;
-    }
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result getRecipe(Http.Request request){
         clearModelList();
         Result res = null;
-        Optional<String> index = request.queryString(idQuery);
 
         modelList.addAll(Recipe.findAll());
         if (modelList.size() == 0)
             res = contentNegotiationError(request,noResults,404);
-
-        if (res == null && index.isPresent())
-            res = getIndexRecipe(request,Long.valueOf(index.get()));
 
         if (res == null)
             res = contentNegotiation(request,getContentXML());
@@ -100,15 +58,16 @@ public class RecipeController extends BaseController {
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
 
     }
-
-    public Result getIndexRecipe(Http.Request request, Long index){
+    @Security.Authenticated(UserAuthenticator.class)
+    public Result getRecipeId(Http.Request request, Long id){
         clearModelList();
         Result res = null;
 
         try {
-            Recipe r = Recipe.findById(index);
+            Recipe r = Recipe.findById(id);
             if (r != null) {
                 modelList.add(r);
+                res = contentNegotiation(request,getContentXML());
             }else{
                 res = contentNegotiationError(request,noResults,404);
             }
@@ -116,19 +75,17 @@ public class RecipeController extends BaseController {
             res = contentNegotiationError(request,formatError,400);
         }
 
-        return res;
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result updateRecipe(Http.Request request){
+    public Result updateRecipe(Http.Request request, Long id){
         clearModelList();
         Form<Recipe> form = formFactory.form(Recipe.class);
         form = validateRequestForm(request,form);
-        Optional<String> index = request.queryString(idQuery);
 
         Result res = checkFormErrors(request,form);
-        if (res == null && index.isPresent()) {
-            Long id = Long.valueOf(index.get());
+        if (res == null) {
             Recipe recipeUpdate = Recipe.findById(id);
             recipeUpdate.update(form.get());
             if (!updateModel(recipeUpdate))
@@ -141,23 +98,17 @@ public class RecipeController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result deleteRecipe(Http.Request request){
+    public Result deleteRecipe(Http.Request request, Long id){
         clearModelList();
         Result res = null;
-        Optional<String> index = request.queryString(idQuery);
-        if (index.isPresent()){
-            Long id2 = Long.valueOf(index.get());
-            Recipe recFinal = Recipe.findById(id2);
+        Recipe recFinal = Recipe.findById(id);
+
+        if (!deleteModel(recFinal,true))
+            res = contentNegotiationError(request,noResults,404);
+        else
+            res = contentNegotiation(request,getContentXML());
 
 
-            if (!deleteModel(recFinal,true))
-                res = contentNegotiationError(request,noResults,404);
-            else
-                res = contentNegotiation(request,getContentXML());
-
-        }else {
-            res = contentNegotiationError(request, missingId, 400);
-        }
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
@@ -184,5 +135,130 @@ public class RecipeController extends BaseController {
         modelList.toArray(array);
         Content content = views.xml.Recipe.recipes.render(Arrays.asList(array));
         return content;
+    }
+
+    @Security.Authenticated(UserAuthenticator.class)
+    public Result addIngredient(Http.Request request, Long id){
+        clearModelList();
+        Result res = null;
+
+        //Optional<String> in = request.queryString(idQuery);
+
+        getRecipeId(request,id);
+        if (modelList.size() == 1){
+            Recipe recipe = (Recipe) modelList.get(0);
+            IngredientController ingredientController = new IngredientController();
+            Form<Ingredient> form = formFactory.form(Ingredient.class);
+            form = ingredientController.validateRequestForm(request,form);
+            res = ingredientController.checkFormErrors(request,form);
+            if (res == null){
+                Ingredient ingredient = form.get();
+                if (!recipe.checkIngredient(ingredient)) {
+                    recipe.ingredientList.add(ingredient);
+                    clearModelList();
+                    if (saveModel(recipe, 0)){
+                        res = contentNegotiation(request, getContentXML());
+                    }
+                }
+                if (res == null)
+                    res = contentNegotiationError(request,duplicatedError,406);
+
+            }
+            if (res == null)
+                contentNegotiationError(request,formatError,400);
+
+        }
+
+
+        if (res == null)
+            res = contentNegotiationError(request,noResults,404);
+
+
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
+    }
+
+
+
+
+    @Security.Authenticated(UserAuthenticator.class)
+    public Result removeIngredient(Http.Request request, Long id, Long id2){
+        clearModelList();
+        Result res = null;
+        //Optional<String> in = request.queryString(idQuery);
+
+        getRecipeId(request,id);
+        if (modelList.size() == 1){
+            Recipe recipe = (Recipe) modelList.get(0);
+
+            Ingredient ingredient = Ingredient.findById(id2);
+            if (recipe.checkIngredient(ingredient)) {
+                recipe.ingredientList.remove(ingredient);
+                clearModelList();
+                if (saveModel(recipe, 0)){
+                    res = contentNegotiation(request, getContentXML());
+                }
+            }
+            if (res == null)
+                res = contentNegotiationError(request,duplicatedError,406);
+
+        }
+
+
+        if (res == null)
+            res = contentNegotiationError(request,noResults,404);
+
+
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
+    }
+
+    @Security.Authenticated(UserAuthenticator.class)
+    public Result getIngredient(Http.Request request, Long id){
+        clearModelList();
+        Result res = null;
+        //Optional<String> in = request.queryString(idQuery);
+        IngredientController ingredientController = new IngredientController();
+        getRecipeId(request,id);
+        if (modelList.size() == 1){
+            Recipe recipe = (Recipe) modelList.get(0);
+            clearModelList();
+            modelList.addAll(recipe.getIngredientList());
+            res = contentNegotiation(request,ingredientController.getContentXML());
+
+        }
+
+        if (res == null)
+            res = contentNegotiationError(request,noResults,404);
+
+
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
+    }
+    @Security.Authenticated(UserAuthenticator.class)
+    public Result getIngredientId(Http.Request request, Long id, Long id2){
+        clearModelList();
+        Result res = null;
+        //Optional<String> in = request.queryString(idQuery);
+        IngredientController ingredientController = new IngredientController();
+        getRecipeId(request,id);
+        if (modelList.size() == 1){
+            Recipe recipe = (Recipe) modelList.get(0);
+
+            Ingredient ingredient = Ingredient.findById(id2);
+            if (recipe.checkIngredient(ingredient)) {
+                clearModelList();
+                modelList.add(ingredient);
+                res = contentNegotiation(request,ingredientController.getContentXML());
+            }
+
+            if (res == null)
+                res = contentNegotiationError(request,formatError,400);
+
+        }
+
+
+        if (res == null)
+            res = contentNegotiationError(request,noResults,404);
+
+
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 }
