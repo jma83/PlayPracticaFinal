@@ -118,13 +118,13 @@ public class BaseController extends Controller {
         return finalObj;
     }
 
-    public Result getModel(Http.Request request, BaseController bm){
+    public Result getModel(Http.Request request, BaseController bc){
         Result res = null;
         if (modelList.size() == 0)
             res = contentNegotiationError(request,noResults,404);
 
         if (res == null)
-            res = contentNegotiation(request,bm.getContentXML());
+            res = contentNegotiation(request,bc.getContentXML());
 
         return res;
     }

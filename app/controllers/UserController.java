@@ -42,11 +42,7 @@ public class UserController extends BaseController {
         Result res = null;
 
         modelList.addAll(User.findAll());
-        if (modelList.size() == 0)
-            res = contentNegotiationError(request,noResults,404);
-
-        if (res == null)
-            res = contentNegotiation(request,getContentXML());
+        res = this.getModel(request,this);
 
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
