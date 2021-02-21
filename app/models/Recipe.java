@@ -1,10 +1,13 @@
 package models;
 
 
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.ebean.ExpressionList;
 import io.ebean.Finder;
 import org.checkerframework.common.value.qual.BoolVal;
 import play.data.validation.Constraints.*;
@@ -16,6 +19,7 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.validation.Valid;
+import java.text.SimpleDateFormat;
 
 @Entity
 public class Recipe extends BaseModel {
@@ -27,6 +31,49 @@ public class Recipe extends BaseModel {
     }
     public static Recipe findById(long id){
         return find.byId(id);
+    }
+    public static List<Recipe> findByName(String name){
+        return find.query().where().eq("name", name).findList();
+    }
+    public static List<Recipe> findByTag(String tag){
+        return find.query().where().eq("recipeBookList", tag).findList();
+    }
+
+    public static List<Recipe> findByDescription(String description){
+        return find.query().where().eq("description", description).findList();
+    }
+    //nameStr,descriptionStr,dateStr,tagListObj1,tagListObj2,ingredientListObj
+    public static List<Recipe> findByFilter(String name,String description, String d1, String d2,List<Tag> tag,List<Ingredient> tag2,List<Ingredient> ingredientList){
+        Date date1 = null;
+        if (d1 != null)
+            date1 = Recipe.toDate(d1);
+        Date date2 = null;
+        if (d2 != null)
+            date2 = Recipe.toDate(d2);
+
+        ExpressionList<Recipe> recipeQuery = find.query().where();
+        if (name!=null)
+            recipeQuery = recipeQuery.like("name", name+"%");
+        if (description!=null)
+            recipeQuery = recipeQuery.like("description", description+"%")  ;
+        if (tag!=null && tag.size() > 0)
+            recipeQuery = recipeQuery.in("tagList", tag);
+        if (date1!=null)
+            recipeQuery = recipeQuery.ge("whenCreated", date1);
+        if (date2!=null)
+            recipeQuery = recipeQuery.le("whenCreated", date2);
+        if (tag2!=null && tag2.size() > 0)
+            recipeQuery = recipeQuery.in("ingredientList", tag2);
+        if (ingredientList!=null && ingredientList.size() > 0)
+            recipeQuery = recipeQuery.in("ingredientList", ingredientList);
+
+        return recipeQuery.findList();
+    }
+
+    public static List<Recipe> findByDate(String date){
+        Date ts = Recipe.toDate(date);
+        return find.query().where().eq("whenCreated", ts).findList();
+
     }
 
     @Required
@@ -43,9 +90,8 @@ public class Recipe extends BaseModel {
     @ManyToMany(cascade = CascadeType.ALL)
     @Valid
     public List<Ingredient> ingredientList = new ArrayList<>();
-    @JsonIgnore
     @ManyToOne
-    public User author = null;
+    public User author;
     @JsonIgnore
     @ManyToMany(mappedBy = "recipeList")
     public List<RecipeBook> recipeBookList = new ArrayList<>();
@@ -150,4 +196,18 @@ public class Recipe extends BaseModel {
         }
         return check;
     }
+
+    public static Date toDate(String date){
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+
+            Date ts = dateFormat.parse(date);
+            return ts;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
 }

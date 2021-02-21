@@ -1,6 +1,7 @@
 package models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.ebean.Finder;
 import play.data.validation.Constraints.*;
 import validators.Name;
 
@@ -17,8 +18,23 @@ public class Tag extends BaseModel {
     @JsonIgnore
     @ManyToMany(mappedBy = "tagList")
     public List<Ingredient> ingredientList;
+    @JsonIgnore
     @ManyToMany(mappedBy = "tagList")
     public List<Recipe> recipeList;
+
+
+    public static final Finder<Long,Tag> find = new Finder<>(Tag.class);
+
+    public static List<Tag> findAll(){
+        return find.all();
+    }
+    public static Tag findById(long id){
+        return find.byId(id);
+    }
+    public static List<Tag> findByName(String tagName){
+        return find.query().where().eq("tagName", tagName).findList();
+    }
+
 
     public Tag(){
         super();

@@ -28,6 +28,9 @@ public class Ingredient extends BaseModel {
     public static List<Ingredient> findByName(String name){
         return find.query().where().eq("name", name).findList();
     }
+    public static List<Ingredient> findByTag(String tag){
+        return find.query().where().eq("tag", tag).findList();
+    }
 
     @Required
     @Name

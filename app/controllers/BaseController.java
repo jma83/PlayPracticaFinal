@@ -126,6 +126,9 @@ public class BaseController extends Controller {
         if (res == null)
             res = contentNegotiation(request,bc.getContentXML());
 
+        if (res == null)
+            res = contentNegotiationError(request,this.formatError,400);
+
         return res;
     }
 

@@ -4,11 +4,14 @@ import io.ebean.Model;
 import io.ebean.annotation.CreatedTimestamp;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.annotation.UpdatedTimestamp;
+import play.data.format.Formats.DateTime;
 
+import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Version;
 import java.sql.Timestamp;
+import java.util.Date;
 
 @MappedSuperclass
 public class BaseModel extends Model {
@@ -16,12 +19,18 @@ public class BaseModel extends Model {
     public Long id;
     @JsonIgnore
     @Version
+    @Column(updatable=false)
     Long version;
+    @DateTime(pattern="yyyy-MM-dd HH:mm:ss")
     @CreatedTimestamp
-    Timestamp whenCreated;
+    @Column(updatable=false)
+    Date whenCreated;
+    @DateTime(pattern="yyyy-MM-dd HH:mm:ss")
     @UpdatedTimestamp
-    Timestamp whenUpdated;
+    @Column(updatable=false)
+    Date whenUpdated;
     @JsonIgnore
+    @Column(updatable=false)
     String titleXML = null;
 
     public Long getId() {
@@ -40,19 +49,19 @@ public class BaseModel extends Model {
         this.version = version;
     }
 
-    public Timestamp getWhenCreated() {
+    public Date getWhenCreated() {
         return whenCreated;
     }
 
-    public void setWhenCreated(Timestamp whenCreated) {
+    public void setWhenCreated(Date whenCreated) {
         this.whenCreated = whenCreated;
     }
 
-    public Timestamp getWhenUpdated() {
+    public Date getWhenUpdated() {
         return whenUpdated;
     }
 
-    public void setWhenUpdated(Timestamp whenUpdated) {
+    public void setWhenUpdated(Date whenUpdated) {
         this.whenUpdated = whenUpdated;
     }
 

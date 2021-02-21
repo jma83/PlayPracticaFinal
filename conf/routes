@@ -16,8 +16,9 @@ GET /recipe/:id controllers.RecipeController.getRecipeId(request: Request, id: L
 GET /recipe/:id/ingredientList controllers.RecipeController.getIngredient(request: Request, id: Long)
 GET /recipe/:id/ingredientList/:id2 controllers.RecipeController.getIngredientId(request: Request, id: Long, id2: Long)
 
-PUT /recipe controllers.RecipeController.updateRecipe(request: Request, id: Long)
-DELETE /recipe controllers.RecipeController.deleteRecipe(request: Request, id: Long)
+PUT /recipe/:id controllers.RecipeController.updateRecipe(request: Request, id: Long)
+PUT /recipe/:id/ingredientList/:id2 controllers.RecipeController.editIngredient(request: Request, id: Long, id2: Long)
+DELETE /recipe/:id controllers.RecipeController.deleteRecipe(request: Request, id: Long)
 DELETE /recipe/:id/ingredientList/:id2 controllers.RecipeController.removeIngredient(request: Request, id: Long, id2: Long)
 
 
