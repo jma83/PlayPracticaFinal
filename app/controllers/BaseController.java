@@ -3,6 +3,9 @@ package controllers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.ser.FilterProvider;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
+import filters.UserTokenFilter;
 import models.*;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -36,6 +39,7 @@ public class BaseController extends Controller {
     final String duplicatedError = "Error, Duplicated register";
     final String deleteIngredientError = "Error, Can't delete this Ingredient, is being used in one or more Recipes";
     String idQuery = "id";
+    FilterProvider filters = new SimpleFilterProvider().addFilter("userTokenFilter", new UserTokenFilter());
 
     public List<BaseModel> createWithXML(NodeList modelNode,Object instance){
         List<BaseModel> models = new ArrayList<>();
@@ -142,7 +146,7 @@ public class BaseController extends Controller {
             //https://grokonez.com/json/resolve-json-infinite-recursion-problems-working-jackson
             ObjectMapper mapper = new ObjectMapper();
             try {
-                String result = mapper.writeValueAsString(modelList);
+                String result = mapper.writer(filters).writeValueAsString(modelList);
                 res = Results.ok(Json.parse(result));
             } catch (JsonProcessingException e) {
                 e.printStackTrace();

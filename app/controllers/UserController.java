@@ -28,6 +28,7 @@ public class UserController extends BaseController {
             if (!saveModel(u, count)){
                 res = contentNegotiationError(request,duplicatedError,406);
             }
+            u.getUserToken().setVisible(true);
         }
 
         if (res==null)
@@ -75,7 +76,7 @@ public class UserController extends BaseController {
         form = validateRequestForm(request,form);
 
         Result res = checkFormErrors(request,form);
-        if (res == null && id != null && id > 0) {
+        if (res == null) {
             User userUpdate = User.findById(id);
             userUpdate.update(form.get());
             if (!updateModel(userUpdate))
@@ -91,19 +92,11 @@ public class UserController extends BaseController {
     public Result deleteUser(Http.Request request, Long id){
         clearModelList();
         Result res = null;
-        if (id != null && id > 0){
             User usuFinal = User.findById(id);
-            /*UserToken userToken = usuFinal.getUserToken();
-            RecipeBook recipeBook = usuFinal.getRecipeBook();
-            deleteModel(userToken,false);
-            deleteModel(recipeBook,false);*/
 
-            if (!deleteModel(usuFinal,true))
-                res = contentNegotiationError(request,noResults,404);
+        if (!deleteModel(usuFinal,true))
+            res = contentNegotiationError(request,noResults,404);
 
-        }else {
-            res = contentNegotiationError(request, missingId, 400);
-        }
         if(res == null){
             res = contentNegotiation(request,getContentXML());
         }

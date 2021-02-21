@@ -1,6 +1,7 @@
 package models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import io.ebean.ExpressionList;
 import play.data.format.Formats;
 import play.data.validation.Constraints.*;
@@ -47,7 +48,7 @@ public class User extends BaseModel {
     @Valid
     public RecipeBook recipeBook;
     @OneToOne(cascade = CascadeType.ALL)
-    //@JsonIgnore
+
     public UserToken userToken;
 
     @JsonIgnore
@@ -58,6 +59,12 @@ public class User extends BaseModel {
     }
     public static User findById(long id){
         return find.byId(id);
+    }
+    public static User findByToken(String t){
+        return find.query().where().in("userToken.token", t).findOne();
+    }
+    public static User findByToken(UserToken t){
+        return find.query().where().in("userToken", t).findOne();
     }
 
     public static List<User> findUsername(String user){
@@ -79,7 +86,7 @@ public class User extends BaseModel {
         this.country = country;
         this.language = language;
         this.userToken = new UserToken(username);
-
+        SimpleBeanPropertyFilter.filterOutAllExcept();
     }
 
     public List<Recipe> getRecipeList() {
@@ -185,6 +192,7 @@ public class User extends BaseModel {
     public void init() {
         setAge();
         setUserToken();
+
     }
 }
 

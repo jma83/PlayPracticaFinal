@@ -35,12 +35,8 @@ public class Recipe extends BaseModel {
     public static List<Recipe> findByName(String name){
         return find.query().where().eq("name", name).findList();
     }
-    public static List<Recipe> findByTag(String tag){
-        return find.query().where().eq("recipeBookList", tag).findList();
-    }
-
-    public static List<Recipe> findByDescription(String description){
-        return find.query().where().eq("description", description).findList();
+    public static List<Recipe> findByIngredient(Ingredient i, Long id){
+        return find.query().where().in("ingredientList", i).eq("id",id).findList();
     }
     //nameStr,descriptionStr,dateStr,tagListObj1,tagListObj2,ingredientListObj
     public static List<Recipe> findByFilter(String name,String description, String d1, String d2,List<Tag> tag,List<Ingredient> tag2,List<Ingredient> ingredientList){

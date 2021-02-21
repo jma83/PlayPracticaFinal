@@ -97,6 +97,7 @@ create table user_token (
   id                            bigint auto_increment not null,
   title_xml                     varchar(255),
   token                         varchar(255),
+  visible                       boolean,
   version                       bigint not null,
   when_created                  timestamp not null,
   when_updated                  timestamp not null,

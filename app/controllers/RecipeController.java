@@ -1,21 +1,28 @@
 package controllers;
 
+import auth.Attrs;
+import auth.PassArgAction;
 import auth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.ebeaninternal.server.expression.Op;
 import io.ebeaninternal.server.lib.util.Str;
-import models.Ingredient;
-import models.Recipe;
-import models.Tag;
+import models.*;
+import org.checkerframework.checker.nullness.Opt;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import play.data.Form;
+import play.libs.typedmap.TypedKey;
+import play.libs.typedmap.TypedMap;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Security;
+import play.mvc.With;
 import play.twirl.api.Content;
+
+import java.lang.reflect.Type;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class RecipeController extends BaseController {
@@ -23,7 +30,8 @@ public class RecipeController extends BaseController {
 
     String headerCount = "X-Recipe-Count";
 
-
+    @Security.Authenticated(UserAuthenticator.class)
+    @With(PassArgAction.class)
     public Result createRecipe(Http.Request request){
         clearModelList();
         Form<Recipe> form = formFactory.form(Recipe.class);
@@ -32,9 +40,14 @@ public class RecipeController extends BaseController {
 
         if (res == null) {
             Recipe r = form.get();
-            //r.init();
-            if (!saveModel(r, 0)){
-                res = contentNegotiationError(request,duplicatedError,406);
+            User user = request.attrs().get(Attrs.USER);
+            if (user!=null) {
+                r.setAuthor(user);
+                if (!saveModel(r, 0)) {
+                    res = contentNegotiationError(request, duplicatedError, 406);
+                }
+            }else{
+                res = contentNegotiationError(request, this.missingId, 400);
             }
         }
 
@@ -190,7 +203,7 @@ public class RecipeController extends BaseController {
     public boolean edit(Recipe recipe, Ingredient newIngredient, Long id2){
         Ingredient inSearch = Ingredient.findById(id2);
 
-        if (recipe.checkIngredient(inSearch)) {
+        if (recipe.findByIngredient(inSearch,recipe.getId()).size() == 1) {
             clearModelList();
             inSearch.update(newIngredient);
             if (this.saveModel(recipe,0)) {
@@ -214,14 +227,13 @@ public class RecipeController extends BaseController {
     public Result removeIngredient(Http.Request request, Long id, Long id2){
         clearModelList();
         Result res = null;
-        //Optional<String> in = request.queryString(idQuery);
 
         getRecipeId(request,id);
         if (modelList.size() == 1){
             Recipe recipe = (Recipe) modelList.get(0);
 
             Ingredient ingredient = Ingredient.findById(id2);
-            if (recipe.checkIngredient(ingredient)) {
+            if (recipe.findByIngredient(ingredient,recipe.getId()).size()==1) {
                 recipe.ingredientList.remove(ingredient);
                 clearModelList();
                 if (saveModel(recipe, 0)){
@@ -232,7 +244,6 @@ public class RecipeController extends BaseController {
                 res = contentNegotiationError(request,duplicatedError,406);
 
         }
-
 
         if (res == null)
             res = contentNegotiationError(request,noResults,404);
@@ -273,15 +284,13 @@ public class RecipeController extends BaseController {
             Recipe recipe = (Recipe) modelList.get(0);
 
             Ingredient ingredient = Ingredient.findById(id2);
-            if (recipe.checkIngredient(ingredient)) {
+            if (recipe.findByIngredient(ingredient,recipe.getId()).size() == 1) {
                 clearModelList();
                 modelList.add(ingredient);
                 res = contentNegotiation(request,ingredientController.getContentXML());
             }
 
         }
-
-
         if (res == null)
             res = contentNegotiationError(request,noResults,404);
 

@@ -1,5 +1,6 @@
 package models;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.ExpressionList;
 import io.ebean.Finder;
@@ -8,12 +9,12 @@ import javax.persistence.Entity;
 import javax.persistence.OneToOne;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
 
 @Entity
+@JsonFilter("userTokenFilter")
 public class UserToken extends BaseModel{
 
     @JsonIgnore
@@ -22,8 +23,10 @@ public class UserToken extends BaseModel{
         return find.query().where().eq("token", token).findList();
     }
 
+
     @OneToOne(mappedBy="userToken")
     String token;
+    Boolean visible = false;
 
     public UserToken(){
         super();
@@ -43,6 +46,14 @@ public class UserToken extends BaseModel{
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public Boolean getVisible() {
+        return visible;
+    }
+
+    public void setVisible(Boolean visible) {
+        this.visible = visible;
     }
 
     public String generateUsernameToken(String username){

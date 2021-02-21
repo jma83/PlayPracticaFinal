@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import controllers.routes;
 import io.ebean.ExpressionList;
 import io.ebeaninternal.server.lib.util.Str;
+import models.User;
 import models.UserToken;
 import play.libs.Json;
 import play.libs.typedmap.TypedKey;
@@ -16,7 +17,9 @@ import play.mvc.Results;
 import play.mvc.Security.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 
 public class UserAuthenticator extends Authenticator {
     private static final String AUTH = "Auth";
@@ -31,25 +34,10 @@ public class UserAuthenticator extends Authenticator {
 
     @Override
     public Optional<String> getUsername(Http.Request req) {
-         if (req.hasHeader(AUTH)){
-             errorName = errorToken;
-            Optional<String> userToken = req.header(AUTH);
-            if (userToken.isPresent()){
-                String fullToken = userToken.get();
-                String[] realToken = fullToken.split(Bearer);
-                if (realToken.length >= 2) {
-                    String value = realToken[1];
-                    List<UserToken> list = UserToken.findUserToken(value);
-                    if (list.size() == 1){
-                        return Optional.of(list.get(0).getToken());
-                    }
-                }
+        UserToken str = validateUserToken(req);
+        if (str==null) return Optional.empty();
 
-            }
-        }else{
-             errorName = errorHeader;
-         }
-        return Optional.empty();
+        return Optional.of(str.getToken());
 
     }
 
@@ -59,4 +47,27 @@ public class UserAuthenticator extends Authenticator {
         result.put("Error",errorName);
         return Results.unauthorized(result);
     }
+
+
+    public static UserToken validateUserToken(Http.Request req){
+        if (req.hasHeader(AUTH)){
+            errorName = errorToken;
+            Optional<String> userToken = req.header(AUTH);
+            if (userToken.isPresent()){
+                String[] realToken = userToken.get().split(Bearer);
+                if (realToken.length >= 2) {
+                    List<UserToken> list = UserToken.findUserToken(realToken[1]);
+                    if (list.size() == 1){
+                        return list.get(0);
+                    }
+                }
+
+            }
+        }else{
+            errorName = errorHeader;
+        }
+        return null;
+    }
+
 }
+
