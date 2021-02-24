@@ -20,6 +20,12 @@ public class RecipeBook extends BaseModel{
     public static RecipeBook findById(long id){
         return find.byId(id);
     }
+    public static RecipeBook findByRecipe(long id, Recipe recipe){
+        return find.query().where().eq("id",id).in("recipeList",recipe).findOne();
+    }
+    public static List<RecipeBook> findByRecipeName(long id, String recipe){
+        return find.query().where().eq("id",id).eq("recipeList.name",recipe).findList();
+    }
 
     @Required
     @Name
@@ -27,12 +33,10 @@ public class RecipeBook extends BaseModel{
     @Required
     @Description
     String review;
-    @JsonIgnore
     @ManyToMany(cascade = CascadeType.ALL)
-    List<Recipe> recipeList = new ArrayList<>();
-    @JsonIgnore
+    public List<Recipe> recipeList = new ArrayList<>();
     @OneToOne(mappedBy = "recipeBook")
-    public User author = null;
+    public User author;
 
     public RecipeBook (){
         super();
@@ -79,8 +83,20 @@ public class RecipeBook extends BaseModel{
     }
 
     public void update(RecipeBook rb){
+        if (rb.getName() != null)
         this.name = rb.getName();
+        if (rb.getReview() != null)
         this.review = rb.getReview();
+        if (rb.getAuthor() != null)
         this.author = rb.getAuthor();
+        if (rb.getRecipeList() != null)
+        this.recipeList = rb.getRecipeList();
+    }
+
+    public void reset(){
+        this.name = "";
+        this.review = "";
+        this.author = null;
+        this.recipeList = new ArrayList<>();
     }
 }

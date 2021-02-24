@@ -43,8 +43,10 @@ public class RecipeController extends BaseController {
             User user = request.attrs().get(Attrs.USER);
             if (user!=null) {
                 r.setAuthor(user);
-                if (!saveModel(r, 0)) {
-                    res = contentNegotiationError(request, duplicatedError, 406);
+                if (Recipe.findByName(r.getName()).size() == 0) {
+                    if (saveModel(r, 0)) {
+                        res = contentNegotiation(request, getContentXML());
+                    }
                 }
             }else{
                 res = contentNegotiationError(request, this.missingId, 400);
@@ -52,7 +54,7 @@ public class RecipeController extends BaseController {
         }
 
         if (res==null)
-            res = contentNegotiation(request, getContentXML());
+            res = contentNegotiationError(request, duplicatedError, 406);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }

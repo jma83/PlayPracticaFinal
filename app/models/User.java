@@ -1,5 +1,6 @@
 package models;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import io.ebean.ExpressionList;
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 
 @Entity
+@JsonFilter("userTokenFilter")
 public class User extends BaseModel {
     @Required
     @Username
@@ -45,7 +47,7 @@ public class User extends BaseModel {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
     public List<Recipe> recipeList = new ArrayList<>();
     @OneToOne(cascade = CascadeType.ALL)
-    @Valid
+    @JsonIgnore
     public RecipeBook recipeBook;
     @OneToOne(cascade = CascadeType.ALL)
 
@@ -189,10 +191,14 @@ public class User extends BaseModel {
         this.userToken = new UserToken(this.username);
     }
 
+    public void setRecipeBook(){
+        this.recipeBook = new RecipeBook("","",new ArrayList<>(),this);
+    }
+
     public void init() {
         setAge();
         setUserToken();
-
+        setRecipeBook();
     }
 }
 

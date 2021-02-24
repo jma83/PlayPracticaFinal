@@ -14,7 +14,6 @@ import java.util.List;
 
 
 @Entity
-@JsonFilter("userTokenFilter")
 public class UserToken extends BaseModel{
 
     @JsonIgnore

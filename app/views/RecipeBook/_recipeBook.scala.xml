@@ -1,10 +1,16 @@
 @(recipeBook: RecipeBook)
 
 <recipeBook>
+    <id>@recipeBook.getId()</id>
     <name>@recipeBook.getName()</name>
     <review>@recipeBook.getReview()</review>
+    @if(recipeBook.getRecipeList() != null && recipeBook.getRecipeList().size() > 0){
     @views.xml.Recipe.recipes(recipeBook.getRecipeList())
+    }
+    @if(recipeBook.getAuthor() != null){
     @views.xml.User._user(recipeBook.getAuthor())
+    }
+
     @if(true){
     <veganos/>
     }
