@@ -27,6 +27,7 @@ public class RecipeBook extends BaseModel{
         return find.query().where().eq("id",id).eq("recipeList.name",recipe).findList();
     }
 
+
     @Required
     @Name
     String name;

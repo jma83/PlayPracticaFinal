@@ -1,5 +1,7 @@
 package controllers;
 
+import auth.Attrs;
+import auth.PassArgAction;
 import auth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
 import models.User;
@@ -8,14 +10,12 @@ import org.w3c.dom.NodeList;
 import play.data.Form;
 import play.mvc.*;
 import play.twirl.api.Content;
-
 import java.util.*;
 
 public class UserController extends BaseController {
     String headerCount = "X-User-Count";
 
-
-    public Result createUser(Http.Request request){
+    public Result createUser(Http.Request request){ //OK
         clearModelList();
         Form<User> form = formFactory.form(User.class);
         form = validateRequestForm(request,form);
@@ -25,81 +25,86 @@ public class UserController extends BaseController {
             User u = form.get();
             u.init();
             int count = User.findUsername(u.getUsername()).size();
-            if (!saveModel(u, count)){
-                res = contentNegotiationError(request,duplicatedError,406);
+            if (saveModel(u, count)){
+                u.getUserToken().setVisible(true);
+                res = contentNegotiation(request, this);
             }
-            u.getUserToken().setVisible(true);
         }
 
-        if (res==null)
-            res = contentNegotiation(request, getContentXML());
+        if (res == null)
+            res = contentNegotiationError(request,duplicatedError,406);
+
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result getUser(Http.Request request){
+    public Result getUser(Http.Request request){    //OK
         clearModelList();
-        Result res = null;
 
         modelList.addAll(User.findAll());
-        res = this.getModel(request,this);
-
+        Result res = this.getModel(request,this);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
 
     }
 
-    public Result getUserId(Http.Request request, Long id){
+    @Security.Authenticated(UserAuthenticator.class)
+    @With(PassArgAction.class)
+    public Result getUserId(Http.Request request, String id){   //OK
         clearModelList();
         Result res = null;
 
-        try {
-            User u = User.findById(id);
-            if (u != null) {
-                modelList.add(u);
-                res = contentNegotiation(request,getContentXML());
-            }else{
-                res = contentNegotiationError(request,noResults,404);
-            }
-        } catch (Exception e) {
-            res = contentNegotiationError(request,formatError,400);
+        User userRequest = request.attrs().get(Attrs.USER);
+        User u = User.findById(checkUserId(userRequest,id,0));
+        if (u != null) {
+            modelList.add(u);
+            res = contentNegotiation(request,this);
         }
+
+        if (res == null)
+            res = contentNegotiationError(request,noResults,404);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result updateUser(Http.Request request, Long id){
+    @With(PassArgAction.class)
+    public Result updateUser(Http.Request request, String id){  //Ok
         clearModelList();
         Form<User> form = formFactory.form(User.class);
         form = validateRequestForm(request,form);
-
         Result res = checkFormErrors(request,form);
+
         if (res == null) {
-            User userUpdate = User.findById(id);
+            User userRequest = request.attrs().get(Attrs.USER);
+            User userUpdate = User.findById(checkUserId(userRequest,id,0));
             userUpdate.update(form.get());
-            if (!updateModel(userUpdate))
-                res = contentNegotiationError(request,noResults,404);
-            else
-                res = contentNegotiation(request, getContentXML());
+            int count = User.findUsernameId(userUpdate.getUsername(),userUpdate.getId()).size();
+            if (updateModel(userUpdate, count))
+                res = contentNegotiation(request, this);
         }
+
+        if (res == null)
+            res = contentNegotiationError(request,noResults,404);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result deleteUser(Http.Request request, Long id){
+    @With(PassArgAction.class)
+    public Result deleteUser(Http.Request request, String id){
         clearModelList();
         Result res = null;
-            User usuFinal = User.findById(id);
+        User userRequest = request.attrs().get(Attrs.USER);
+        User usuFinal = User.findById(checkUserId(userRequest,id,0));
 
-        if (!deleteModel(usuFinal,true))
-            res = contentNegotiationError(request,noResults,404);
-
-        if(res == null){
-            res = contentNegotiation(request,getContentXML());
+        if (deleteModel(usuFinal)) {
+            res = contentNegotiation(request, this);
         }
+
+        if (res == null)
+            res = contentNegotiationError(request,noResults,404);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }

@@ -1,0 +1,5 @@
+@(success: Boolean,message: String)
+<response>
+    <success>@success</success>
+    <message>@message</message>
+</response>

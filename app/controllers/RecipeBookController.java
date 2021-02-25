@@ -4,7 +4,6 @@ import auth.Attrs;
 import auth.PassArgAction;
 import auth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
-import models.Ingredient;
 import models.Recipe;
 import models.RecipeBook;
 import models.User;
@@ -46,10 +45,10 @@ public class RecipeBookController extends BaseController {
 
         User user = request.attrs().get(Attrs.USER);
         if (user !=null) {
-            RecipeBook r = RecipeBook.findById(checkUserId(user, id));
+            RecipeBook r = RecipeBook.findById(checkUserId(user, id,1));
             if (r != null) {
                 modelList.add(r);
-                res = contentNegotiation(request, getContentXML());
+                res = contentNegotiation(request, this);
             } else {
                 res = contentNegotiationError(request, noResults, 404);
             }
@@ -70,13 +69,14 @@ public class RecipeBookController extends BaseController {
 
         if (res == null) {
             User user = request.attrs().get(Attrs.USER);
-            RecipeBook recipeUpdate = RecipeBook.findById(checkSelfId(user,id));
+            RecipeBook recipeUpdate = RecipeBook.findById(checkSelfId(user,id,1));
             recipeUpdate.update(form.get());
-            if (!updateModel(recipeUpdate))
-                res = contentNegotiationError(request,noResults,404);
-            else
-                res = contentNegotiation(request, getContentXML());
+            if (updateModel(recipeUpdate,0))
+                res = contentNegotiation(request, this);
         }
+
+        if (res == null)
+            res = contentNegotiationError(request,noResults,404);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -88,11 +88,11 @@ public class RecipeBookController extends BaseController {
         Result res = null;
         User user = request.attrs().get(Attrs.USER);
         if (user != null) {
-            RecipeBook recFinal = RecipeBook.findById(checkSelfId(user,id));
+            RecipeBook recFinal = RecipeBook.findById(checkSelfId(user,id,1));
             if (recFinal != null) {
                 recFinal.reset();
                 if (saveModel(recFinal, 0)) {
-                    res = contentNegotiation(request, getContentXML());
+                    res = contentNegotiation(request, this);
                 }
             }
         }
@@ -135,7 +135,7 @@ public class RecipeBookController extends BaseController {
 
         User user = request.attrs().get(Attrs.USER);
         if (user != null) {
-            if (checkSelfId(user, id) != -1L){
+            if (checkSelfId(user, id,1) != -1L){
                 Recipe recipe = Recipe.findById(id2);
                 if (recipe != null) {
                     RecipeBook rb = user.getRecipeBook();
@@ -143,7 +143,7 @@ public class RecipeBookController extends BaseController {
                         if (RecipeBook.findByRecipe(rb.getId(), recipe) == null) {
                             rb.getRecipeList().add(recipe);
                             if (saveModel(rb, 0)) {
-                                res = contentNegotiation(request, getContentXML());
+                                res = contentNegotiation(request, this);
                             }
                         }
                         if (res == null)
@@ -170,7 +170,7 @@ public class RecipeBookController extends BaseController {
 
         User user = request.attrs().get(Attrs.USER);
         if (user != null) {
-            if (checkSelfId(user, id) != -1L){
+            if (checkSelfId(user, id,1) != -1L){
                 Form<Recipe> form = formFactory.form(Recipe.class);
                 RecipeController recipeController = new RecipeController();
                 recipeController.createRecipe(request);
@@ -179,7 +179,7 @@ public class RecipeBookController extends BaseController {
                 if (rb != null) {
                     rb.getRecipeList().add(recipe);
                     if (saveModel(rb, 0)) {
-                        res = contentNegotiation(request, getContentXML());
+                        res = contentNegotiation(request, this);
                     }
 
                     if (res == null)
@@ -205,7 +205,7 @@ public class RecipeBookController extends BaseController {
         Result res = null;
 
         User user = request.attrs().get(Attrs.USER);
-        RecipeBook rb = RecipeBook.findById(checkUserId(user,id));
+        RecipeBook rb = RecipeBook.findById(checkUserId(user,id,1));
         if (rb != null) {
             List<Recipe> recipeList = rb.getRecipeList();
 
@@ -228,7 +228,7 @@ public class RecipeBookController extends BaseController {
         Result res = null;
 
         User user = request.attrs().get(Attrs.USER);
-        RecipeBook rb = RecipeBook.findById(checkUserId(user,id));
+        RecipeBook rb = RecipeBook.findById(checkUserId(user,id,1));
         if (rb != null) {
             Recipe recipe = Recipe.findById(id2);
             if (recipe != null) {
@@ -257,14 +257,14 @@ public class RecipeBookController extends BaseController {
         Result res = null;
 
         User user = request.attrs().get(Attrs.USER);
-        RecipeBook rb = RecipeBook.findById(checkUserId(user,id));
+        RecipeBook rb = RecipeBook.findById(checkUserId(user,id,1));
         if (rb != null) {
             Recipe recipe = Recipe.findById(id2);
             if (recipe != null) {
                 if (RecipeBook.findByRecipe(rb.getId(),recipe) != null) {
                     rb.recipeList.remove(recipe);
                     if (saveModel(rb,0)){
-                        res = contentNegotiation(request, getContentXML());
+                        res = contentNegotiation(request, this);
                     }
                 }
 
@@ -278,24 +278,5 @@ public class RecipeBookController extends BaseController {
 
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
-    }
-
-    private Long checkUserId(User u, String id){
-        Long res = checkSelfId(u,id);
-        if (res != -1) return res;
-        try {
-            res = Long.valueOf(id);
-        }catch (NumberFormatException e){
-            System.out.println("Error: " + e.getMessage());
-        }
-
-        return res;
-    }
-
-    private Long checkSelfId(User u, String id){
-        if ("self".equals(id) || id.equals(Long.toString(u.getRecipeBook().getId()))){
-            return u.getRecipeBook().getId();
-        }
-        return -1L;
     }
 }

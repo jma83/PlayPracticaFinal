@@ -17,6 +17,7 @@ import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
 import play.twirl.api.Content;
+import scala.Int;
 
 import javax.inject.Inject;
 import java.lang.reflect.Field;
@@ -38,7 +39,7 @@ public class BaseController extends Controller {
     final String missingId = "Error, missing id";
     final String duplicatedError = "Error, Duplicated register";
     final String deleteIngredientError = "Error, Can't delete this Ingredient, is being used in one or more Recipes";
-    String idQuery = "id";
+    final String deleteOk = "The model has been deleted successfully";
     FilterProvider filters = new SimpleFilterProvider().addFilter("userTokenFilter", new UserTokenFilter());
 
     public List<BaseModel> createWithXML(NodeList modelNode,Object instance){
@@ -128,7 +129,7 @@ public class BaseController extends Controller {
             res = contentNegotiationError(request,noResults,404);
 
         if (res == null)
-            res = contentNegotiation(request,bc.getContentXML());
+            res = contentNegotiation(request,bc);
 
         if (res == null)
             res = contentNegotiationError(request,this.formatError,400);
@@ -136,20 +137,32 @@ public class BaseController extends Controller {
         return res;
     }
 
-    public Result contentNegotiation(Http.Request request, Content content){
+    public Result contentNegotiation(Http.Request request, BaseController baseController){
         Result res = null;
-        System.out.println(modelList.size());
         if (request.accepts("application/xml")){
-
-            res = Results.ok(content);
+            if (modelList != null && modelList.size() > 0) {
+                res = Results.ok(baseController.getContentXML());
+            }else{
+                Content content = views.xml.Generic._generic.render(true,deleteOk);
+                res = Results.ok(content);
+            }
         }else if (request.accepts("application/json")) {
             //https://grokonez.com/json/resolve-json-infinite-recursion-problems-working-jackson
             ObjectMapper mapper = new ObjectMapper();
             try {
-                String result = mapper.writer(filters).writeValueAsString(modelList);
-                res = Results.ok(Json.parse(result));
+                if (modelList != null && modelList.size() > 0) {
+                    System.out.println(modelList.size());
+                    String result = mapper.writer(filters).writeValueAsString(modelList);
+                    res = Results.ok(Json.parse(result));
+                }else{
+                    ObjectNode node = Json.newObject();
+                    node.put("success", true);
+                    node.put("message", deleteOk);
+                    res = Results.ok(node);
+                }
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                System.out.println("Error: " + e.getMessage());
+                contentNegotiationError(request,e.getMessage(),500);
             }
 
         }else{
@@ -162,11 +175,12 @@ public class BaseController extends Controller {
     public Result contentNegotiationError(Http.Request request, String errorMsg, Integer status){
         Result res = null;
         if (request.accepts("application/xml")){
-            Content content = views.xml.Error._error.render(errorMsg);
+            Content content = views.xml.Generic._generic.render(false,errorMsg);
             res = Results.status(status,content);
         }else if (request.accepts("application/json")) {
             ObjectNode objectNode = Json.newObject();
-            objectNode.put("Error",errorMsg);
+            objectNode.put("success", false);
+            objectNode.put("message", errorMsg);
             res = Results.status(status,objectNode);
         }else{
             res = Results.status(status,errorMsg);
@@ -200,7 +214,9 @@ public class BaseController extends Controller {
         return false;
     }
 
-    public boolean updateModel(Object modelType){
+    public boolean updateModel(Object modelType, int count){
+        if (count != 0) return false;
+
         if (modelType!=null) {
             BaseModel modelUpdate = (BaseModel) modelType;
             modelList.add(modelUpdate);
@@ -210,20 +226,46 @@ public class BaseController extends Controller {
         return false;
     }
 
-    public boolean deleteModel(Object modelType, boolean add){
+    public boolean deleteModel(Object modelType){
         if (modelType!=null) {
             try {
                 BaseModel modelDelete = (BaseModel) modelType;
-                if (add) this.modelList.add(modelDelete);
                 modelDelete.delete();
                 return true;
+
             }catch (Exception e){
                 System.out.println(e.getMessage());
-                return false;
             }
 
         }
         return false;
+    }
+
+    protected Long checkUserId(User u, String id, Integer type){
+        if (u == null) return -1L;
+
+        Long res = checkSelfId(u,id,type);
+        if (res != -1) return res;
+        try {
+            res = Long.valueOf(id);
+        }catch (NumberFormatException e){
+            System.out.println("Error: " + e.getMessage());
+        }
+
+        return res;
+    }
+
+    protected Long checkSelfId(User u, String id, Integer type){
+        if (type == 1) {
+            if ("self".equals(id) || id.equals(Long.toString(u.getRecipeBook().getId()))) {
+                return u.getRecipeBook().getId();
+            }
+        }else{
+            if ("self".equals(id) || id.equals(Long.toString(u.getId()))) {
+                return u.getId();
+            }
+        }
+        return -1L;
     }
 
     public void clearModelList(){

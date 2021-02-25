@@ -4,9 +4,9 @@
 
 POST /user controllers.UserController.createUser(request: Request)
 GET /user controllers.UserController.getUser(request: Request)
-GET /user/:id controllers.UserController.getUserId(request: Request, id: Long)
-PUT /user/:id controllers.UserController.updateUser(request: Request, id: Long)
-DELETE /user/:id controllers.UserController.deleteUser(request: Request, id: Long)
+GET /user/:id controllers.UserController.getUserId(request: Request, id: String)
+PUT /user/:id controllers.UserController.updateUser(request: Request, id: String)
+DELETE /user/:id controllers.UserController.deleteUser(request: Request, id: String)
 
 POST /recipe controllers.RecipeController.createRecipe(request: Request)
 POST /recipe/:id/ingredientList controllers.RecipeController.addIngredient(request: Request, id: Long)

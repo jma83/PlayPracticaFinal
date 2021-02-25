@@ -2,8 +2,8 @@ package models;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
-import io.ebean.ExpressionList;
 import play.data.format.Formats;
 import play.data.validation.Constraints.*;
 
@@ -15,13 +15,9 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import javax.validation.Valid;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 
@@ -31,46 +27,48 @@ public class User extends BaseModel {
     @Required
     @Username
     String username;
+
     @Required
     @Email
     String email;
+
     @Birthdate
     @Formats.DateTime(pattern = "yyyy-MM-dd")
     Date birthdate;
-    @JsonIgnore
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     Integer age;
-    String country = null;
-    String language = null;
+    String country;
+    String language;
 
-
-    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
+    @JsonIgnore
     public List<Recipe> recipeList = new ArrayList<>();
+
     @OneToOne(cascade = CascadeType.ALL)
     @JsonIgnore
     public RecipeBook recipeBook;
-    @OneToOne(cascade = CascadeType.ALL)
 
+    @OneToOne(cascade = CascadeType.ALL)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public UserToken userToken;
 
     @JsonIgnore
     public static final Finder<Long,User> find = new Finder<>(User.class);
-
     public static List<User> findAll(){
         return find.all();
     }
     public static User findById(long id){
         return find.byId(id);
     }
-    public static User findByToken(String t){
-        return find.query().where().in("userToken.token", t).findOne();
-    }
     public static User findByToken(UserToken t){
         return find.query().where().in("userToken", t).findOne();
     }
-
     public static List<User> findUsername(String user){
         return find.query().where().eq("username", user).findList();
+    }
+    public static List<User> findUsernameId(String user, Long id){
+        return find.query().where().eq("username", user).ne("id",id).findList();
     }
 
 
@@ -79,7 +77,7 @@ public class User extends BaseModel {
         setTitleXML("user");
     }
 
-    public User(String username,String email,Date birthdate, Integer age, String country, String language, Integer privilege){
+    public User(String username,String email,Date birthdate, Integer age, String country, String language){
         super();
         this.username = username;
         this.email = email;
@@ -88,7 +86,44 @@ public class User extends BaseModel {
         this.country = country;
         this.language = language;
         this.userToken = new UserToken(username);
-        SimpleBeanPropertyFilter.filterOutAllExcept();
+    }
+
+    public void setAge() {
+        //https://www.baeldung.com/java-date-difference
+        if (this.birthdate != null) {
+            Date date2 = new Date();
+            long diffInMillies = Math.abs(this.birthdate.getTime() - date2.getTime());
+            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+            this.age = Math.toIntExact(diff / 365);
+        }
+
+    }
+
+    public void setUserToken(){
+        this.userToken = new UserToken(this.username);
+    }
+
+    public void setRecipeBook(){
+        this.recipeBook = new RecipeBook
+                (this.getUsername() + "'s recipe book",
+                "My recipe book",
+                new ArrayList<>(),
+                this);
+    }
+
+    public void init() {
+        setAge();
+        setUserToken();
+        setRecipeBook();
+    }
+
+    public void update(User u){
+        this.setBirthdate(u.getBirthdate());
+        this.setCountry(u.getCountry());
+        this.setEmail(u.getEmail());
+        this.setLanguage(u.getLanguage());
+        this.setUsername(u.getUsername());
+        this.setAge();
     }
 
     public List<Recipe> getRecipeList() {
@@ -135,26 +170,6 @@ public class User extends BaseModel {
         this.age = age;
     }
 
-    public void setAge() {
-        //https://www.baeldung.com/java-date-difference
-        if (this.birthdate != null) {
-            Date date2 = new Date();
-            long diffInMillies = Math.abs(this.birthdate.getTime() - date2.getTime());
-            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-            this.age = Math.toIntExact(diff / 365);
-        }
-
-    }
-
-    public void update(User u){
-        this.setAge(u.getAge());
-        this.setBirthdate(u.getBirthdate());
-        this.setCountry(u.getCountry());
-        this.setEmail(u.getEmail());
-        this.setLanguage(u.getLanguage());
-        this.setUsername(u.getUsername());
-    }
-
     public String getCountry() {
         return country;
     }
@@ -175,9 +190,7 @@ public class User extends BaseModel {
         return recipeBook;
     }
 
-    public void setRecipeBook(RecipeBook recipeBook) {
-        this.recipeBook = recipeBook;
-    }
+    public void setRecipeBook(RecipeBook recipeBook) { this.recipeBook = recipeBook; }
 
     public UserToken getUserToken() {
         return userToken;
@@ -187,18 +200,5 @@ public class User extends BaseModel {
         this.userToken = userToken;
     }
 
-    public void setUserToken(){
-        this.userToken = new UserToken(this.username);
-    }
-
-    public void setRecipeBook(){
-        this.recipeBook = new RecipeBook("","",new ArrayList<>(),this);
-    }
-
-    public void init() {
-        setAge();
-        setUserToken();
-        setRecipeBook();
-    }
 }
 

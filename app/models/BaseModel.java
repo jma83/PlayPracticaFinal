@@ -10,7 +10,6 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Version;
-import java.sql.Timestamp;
 import java.util.Date;
 
 @MappedSuperclass

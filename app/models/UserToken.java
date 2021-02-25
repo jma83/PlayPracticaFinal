@@ -2,6 +2,7 @@ package models;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.ebean.ExpressionList;
 import io.ebean.Finder;
 
@@ -24,7 +25,9 @@ public class UserToken extends BaseModel{
 
 
     @OneToOne(mappedBy="userToken")
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     String token;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     Boolean visible = false;
 
     public UserToken(){
@@ -37,6 +40,16 @@ public class UserToken extends BaseModel{
         //https://www.javatpoint.com/java-get-current-date
 
         token = this.generateUsernameToken(username);
+    }
+
+    public String generateUsernameToken(String username){
+        this.titleXML="userToken";
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime now = LocalDateTime.now();
+        String currentdate = dtf.format(now);
+        String keySource = username + currentdate + Math.random();
+        byte[] bytes = Base64.getEncoder().encode(keySource.getBytes());
+        return new String(bytes);
     }
 
     public String getToken() {
@@ -55,13 +68,4 @@ public class UserToken extends BaseModel{
         this.visible = visible;
     }
 
-    public String generateUsernameToken(String username){
-        this.titleXML="userToken";
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        LocalDateTime now = LocalDateTime.now();
-        String currentdate = dtf.format(now);
-        String keySource = username + currentdate + Math.random();
-        byte[] bytes = Base64.getEncoder().encode(keySource.getBytes());
-        return new String(bytes);
-    }
 }

@@ -35,7 +35,7 @@ public class IngredientController extends BaseController {
         }
 
         if (res==null)
-            res = contentNegotiation(request, getContentXML());
+            res = contentNegotiation(request, this);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -61,7 +61,7 @@ public class IngredientController extends BaseController {
             Ingredient i = Ingredient.findById(id);
             if (i != null) {
                 modelList.add(i);
-                res = contentNegotiation(request,getContentXML());
+                res = contentNegotiation(request,this);
             }else{
                 res = contentNegotiationError(request,noResults,404);
             }
@@ -82,11 +82,13 @@ public class IngredientController extends BaseController {
         if (res == null ) {
             Ingredient ingredientUpdate = Ingredient.findById(id);
             ingredientUpdate.update(form.get());
-            if (!updateModel(ingredientUpdate))
-                res = contentNegotiationError(request,noResults,404);
-            else
-                res = contentNegotiation(request, getContentXML());
+            int count = Ingredient.findByName(ingredientUpdate.getName()).size();
+            if (updateModel(ingredientUpdate,count))
+                res = contentNegotiation(request, this);
         }
+
+        if (res == null)
+            res = contentNegotiationError(request,noResults,404);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -98,10 +100,10 @@ public class IngredientController extends BaseController {
         if (id > 0){
             Ingredient ingrFinal = Ingredient.findById(id);
 
-            if (!deleteModel(ingrFinal,true))
+            if (!deleteModel(ingrFinal))
                 res = contentNegotiationError(request,deleteIngredientError,404);
             else
-                res = contentNegotiation(request,getContentXML());
+                res = contentNegotiation(request,this);
 
         }else {
             res = contentNegotiationError(request, missingId, 400);
