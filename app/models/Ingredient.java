@@ -28,6 +28,24 @@ public class Ingredient extends BaseModel {
     public static List<Ingredient> findByName(String name){
         return find.query().where().eq("name", name).findList();
     }
+    public static List<Ingredient> findAndMergeIngredientList(List<Ingredient> ingredientList){
+        List<String> listNames = new ArrayList<>();
+        for (Ingredient i:ingredientList) {
+            listNames.add(i.getName());
+        }
+        List<Ingredient> ingredientList2 = find.query().where().in("name", listNames).findList();
+
+        for (int i = 0; i< ingredientList.size();i++) {
+            for (int j = 0; j< ingredientList2.size();j++) {
+                if (ingredientList.get(i).getName().equals(ingredientList2.get(j).getName())){
+                    ingredientList.set(i,ingredientList2.get(j));
+                    break;
+                }
+            }
+        }
+        return ingredientList;
+
+    }
     public static List<Ingredient> findByTag(String tag){
         return find.query().where().eq("tag", tag).findList();
     }

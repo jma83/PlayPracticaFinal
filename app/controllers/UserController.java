@@ -34,7 +34,6 @@ public class UserController extends BaseController {
         if (res == null)
             res = contentNegotiationError(request,duplicatedError,406);
 
-
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
@@ -79,32 +78,30 @@ public class UserController extends BaseController {
         if (res == null) {
             User userRequest = request.attrs().get(Attrs.USER);
             User userUpdate = User.findById(checkUserId(userRequest,id,0));
-            userUpdate.update(form.get());
-            int count = User.findUsernameId(userUpdate.getUsername(),userUpdate.getId()).size();
-            if (updateModel(userUpdate, count))
-                res = contentNegotiation(request, this);
+            if (userUpdate != null) {
+                userUpdate.update(form.get());
+                int count = User.findUsernameId(userUpdate.getUsername(), userUpdate.getId()).size();
+                if (updateModel(userUpdate, count))
+                    res = contentNegotiation(request, this);
+            }
+            if (res == null)
+                res = contentNegotiationError(request,noResults,404);
         }
 
         if (res == null)
-            res = contentNegotiationError(request,noResults,404);
+            res = contentNegotiationError(request,formatError,400);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     @Security.Authenticated(UserAuthenticator.class)
     @With(PassArgAction.class)
-    public Result deleteUser(Http.Request request, String id){
+    public Result deleteUser(Http.Request request, String id){  //Ok
         clearModelList();
-        Result res = null;
         User userRequest = request.attrs().get(Attrs.USER);
         User usuFinal = User.findById(checkUserId(userRequest,id,0));
 
-        if (deleteModel(usuFinal)) {
-            res = contentNegotiation(request, this);
-        }
-
-        if (res == null)
-            res = contentNegotiationError(request,noResults,404);
+        Result res = deleteModelResult(request,usuFinal);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }

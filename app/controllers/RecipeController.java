@@ -4,6 +4,7 @@ import auth.Attrs;
 import auth.PassArgAction;
 import auth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.ebeaninternal.server.lib.util.Str;
 import models.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -25,7 +26,7 @@ public class RecipeController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     @With(PassArgAction.class)
-    public Result createRecipe(Http.Request request){
+    public Result createRecipe(Http.Request request){   //Ok
         clearModelList();
         Form<Recipe> form = formFactory.form(Recipe.class);
         form = validateRequestForm(request,form);
@@ -34,15 +35,11 @@ public class RecipeController extends BaseController {
         if (res == null) {
             Recipe r = form.get();
             User user = request.attrs().get(Attrs.USER);
-            if (user!=null) {
-                r.setAuthor(user);
-                Integer i = Recipe.findByName(r.getName()).size();
-                if (saveModel(r, i)) {
-                    res = contentNegotiation(request, this);
-                }
-
-            }else{
-                res = contentNegotiationError(request, this.missingId, 400);
+            r.setAuthor(user);
+            int count = Recipe.findByNameUser(r.getName(),user).size();
+            r.setIngredientList(Ingredient.findAndMergeIngredientList(r.getIngredientList()));
+            if (saveModel(r, count)) {
+                res = contentNegotiation(request, this);
             }
         }
 
@@ -54,52 +51,27 @@ public class RecipeController extends BaseController {
 
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result getRecipe(Http.Request request){
+    @With(PassArgAction.class)
+    public Result getRecipe(Http.Request request){  //OK
         clearModelList();
-        Result res = null;
-
-        if (!this.filterRecipe(request) && modelList.size() == 0)
+        User user = request.attrs().get(Attrs.USER);
+        if (!this.filterRecipe(request,user) && modelList.size() == 0)
         modelList.addAll(Recipe.findAll());
 
-        res = this.getModel(request,this);
+        Result res = this.getModel(request,this);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
 
     }
     @Security.Authenticated(UserAuthenticator.class)
-    public Result getRecipeId(Http.Request request, Long id){
+    public Result getRecipeId(Http.Request request, Long id){   //OK
         clearModelList();
         Result res = null;
 
-        try {
-            Recipe r = Recipe.findById(id);
-            if (r != null) {
-                modelList.add(r);
-                res = contentNegotiation(request,this);
-            }else{
-                res = contentNegotiationError(request,noResults,404);
-            }
-        } catch (NumberFormatException e) {
-            res = contentNegotiationError(request,formatError,400);
-        }
-
-        return res.withHeader(headerCount,String.valueOf(modelList.size()));
-    }
-
-    @Security.Authenticated(UserAuthenticator.class)
-    public Result updateRecipe(Http.Request request, Long id){
-        clearModelList();
-        Form<Recipe> form = formFactory.form(Recipe.class);
-        form = validateRequestForm(request,form);
-
-        Result res = checkFormErrors(request,form);
-        if (res == null) {
-            Recipe recipeUpdate = Recipe.findById(id);
-            recipeUpdate.update(form.get());
-            int count = Recipe.findByName(recipeUpdate.getName()).size();
-            if (updateModel(recipeUpdate,count))
-                res = contentNegotiation(request, this);
-
+        Recipe r = Recipe.findById(id);
+        if (r != null) {
+            modelList.add(r);
+            res = contentNegotiation(request,this);
         }
 
         if (res == null)
@@ -109,15 +81,37 @@ public class RecipeController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
+    public Result updateRecipe(Http.Request request, Long id){
+        clearModelList();
+        Form<Recipe> form = formFactory.form(Recipe.class);
+        form = validateRequestForm(request,form);
+        Result res = checkFormErrors(request,form);
+
+        if (res == null) {
+            Recipe recipeUpdate = Recipe.findById(id);
+            if (recipeUpdate != null) {
+                recipeUpdate.update(form.get());
+                int count = Recipe.findByNameUser(recipeUpdate.getName(),recipeUpdate.getAuthor()).size();
+                recipeUpdate.setIngredientList(Ingredient.findAndMergeIngredientList(recipeUpdate.getIngredientList()));
+                if (updateModel(recipeUpdate, count))
+                    res = contentNegotiation(request, this);
+            }
+            if (res == null)
+                res = contentNegotiationError(request,noResults,404);
+        }
+
+        if (res == null)
+            res = contentNegotiationError(request,formatError,400);
+
+        return res.withHeader(headerCount,String.valueOf(modelList.size()));
+    }
+
+    @Security.Authenticated(UserAuthenticator.class)
     public Result deleteRecipe(Http.Request request, Long id){
         clearModelList();
-        Result res = null;
         Recipe recFinal = Recipe.findById(id);
 
-        if (!deleteModel(recFinal))
-            res = contentNegotiationError(request,noResults,404);
-        else
-            res = contentNegotiation(request,this);
+        Result res = deleteModelResult(request,recFinal);
 
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
@@ -297,7 +291,7 @@ public class RecipeController extends BaseController {
     }
 
 
-    public boolean filterRecipe(Http.Request request){
+    public boolean filterRecipe(Http.Request request,User userRequest){
         Optional<String> name = request.queryString("name");
         Optional<String> date1 = request.queryString("greaterDate");
         Optional<String> date2 = request.queryString("lesserDate");
@@ -305,13 +299,17 @@ public class RecipeController extends BaseController {
         Optional<String> tag = request.queryString("tag");
         Optional<String> ingredientName = request.queryString("ingredientName");
         Optional<String> ingredientTag = request.queryString("ingredientTag");
+        Optional<String> authorName = request.queryString("authorName");
+        Optional<String> authorId = request.queryString("authorId");
         String nameStr = null;
         String dateStr1 = null;
         String dateStr2 = null;
         String descriptionStr = null;
-        List<Tag>  tagListObj1 = null;
+        List<Tag> tagListObj1 = null;
         List<Ingredient>  ingredientTagListObj = null;
         List<Ingredient> ingredientListObj = null;
+        Long authorLong = null;
+        String authorNameStr = null;
 
         boolean check = false;
 
@@ -343,7 +341,20 @@ public class RecipeController extends BaseController {
             ingredientTagListObj = Ingredient.findByTag(ingredientTag.get());
             check = true;
         }
-        List<Recipe> recipeList = Recipe.findByFilter(nameStr,descriptionStr,dateStr1,dateStr2,tagListObj1,ingredientTagListObj,ingredientListObj);
+        if (authorId.isPresent()) {
+            User u = User.findById(checkUserId(userRequest, authorId.get(), 0));
+            if (u != null){
+                authorLong = u.getId();
+            }else {
+                authorLong = -1L;
+            }
+            check = true;
+        }
+        if (authorName.isPresent()){
+            authorNameStr = authorName.get();
+            check = true;
+        }
+        List<Recipe> recipeList = Recipe.findByFilter(nameStr,descriptionStr,dateStr1,dateStr2,tagListObj1,ingredientTagListObj,ingredientListObj, authorLong, authorNameStr);
 
 
         if (modelList.isEmpty() && recipeList != null) modelList.addAll(recipeList);

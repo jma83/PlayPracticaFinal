@@ -32,14 +32,14 @@ public class Recipe extends BaseModel {
     public static Recipe findById(long id){
         return find.byId(id);
     }
-    public static List<Recipe> findByName(String name){
-        return find.query().where().eq("name", name).findList();
-    }
     public static List<Recipe> findByIngredient(Ingredient i, Long id){
         return find.query().where().in("ingredientList", i).eq("id",id).findList();
     }
-    //nameStr,descriptionStr,dateStr,tagListObj1,tagListObj2,ingredientListObj
-    public static List<Recipe> findByFilter(String name,String description, String d1, String d2,List<Tag> tag,List<Ingredient> tag2,List<Ingredient> ingredientList){
+    public static List<Recipe> findByNameUser(String name, User u){
+        return find.query().where().eq("name", name).eq("author", u).findList();
+    }
+
+    public static List<Recipe> findByFilter(String name,String description, String d1, String d2,List<Tag> tag,List<Ingredient> tag2,List<Ingredient> ingredientList, Long authorId, String authorName){
         Date date1 = null;
         if (d1 != null)
             date1 = Recipe.toDate(d1);
@@ -62,14 +62,12 @@ public class Recipe extends BaseModel {
             recipeQuery = recipeQuery.in("ingredientList", tag2);
         if (ingredientList!=null && ingredientList.size() > 0)
             recipeQuery = recipeQuery.in("ingredientList", ingredientList);
+        if (authorId!=null)
+            recipeQuery = recipeQuery.in("author.id", authorId);
+        if (authorName!=null)
+            recipeQuery = recipeQuery.in("author.username", authorName);
 
         return recipeQuery.findList();
-    }
-
-    public static List<Recipe> findByDate(String date){
-        Date ts = Recipe.toDate(date);
-        return find.query().where().eq("whenCreated", ts).findList();
-
     }
 
     @Required
@@ -99,7 +97,7 @@ public class Recipe extends BaseModel {
     }
 
     public Recipe (String name, String description, Boolean visibility, List<Tag> tagList,
-                   List<Ingredient> ingredientList,User author,List<RecipeBook> recipeBookList){
+                   List<Ingredient> ingredientList,User author){
         super();
         this.name = name;
         this.description = description;
@@ -107,7 +105,38 @@ public class Recipe extends BaseModel {
         this.tagList = tagList;
         this.ingredientList = ingredientList;
         this.author = author;
-        this.recipeBookList = recipeBookList;
+    }
+
+    public void update(Recipe recipe){
+        this.name = recipe.getName();
+        this.description = recipe.getDescription();
+        this.author = recipe.getAuthor();
+        this.visibility = recipe.getVisibility();
+        this.tagList = recipe.getTagList();
+        this.ingredientList = recipe.getIngredientList();
+    }
+
+    public boolean checkIngredient(Ingredient ingredient){
+        Boolean check = false;
+        for (Ingredient i:ingredientList) {
+            if (i.getName().equals(ingredient.getName())){
+                check = true;
+                break;
+            }
+        }
+        return check;
+    }
+
+    public static Date toDate(String date){
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+
+            Date ts = dateFormat.parse(date);
+            return ts;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public User getAuthor() {
@@ -172,37 +201,6 @@ public class Recipe extends BaseModel {
 
     public void setRecipeBookList(List<RecipeBook> recipeBookList) {
         this.recipeBookList = recipeBookList;
-    }
-
-    public void update(Recipe recipe){
-        this.name = recipe.getName();
-        this.description = recipe.getDescription();
-        this.author = recipe.getAuthor();
-        this.visibility = recipe.getVisibility();
-        this.tagList = recipe.getTagList();
-    }
-
-    public boolean checkIngredient(Ingredient ingredient){
-        Boolean check = false;
-        for (Ingredient i:ingredientList) {
-            if (i.getName().equals(ingredient.getName())){
-                check = true;
-                break;
-            }
-        }
-        return check;
-    }
-
-    public static Date toDate(String date){
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        try {
-
-            Date ts = dateFormat.parse(date);
-            return ts;
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
 

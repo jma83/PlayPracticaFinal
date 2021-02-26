@@ -17,7 +17,6 @@ import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
 import play.twirl.api.Content;
-import scala.Int;
 
 import javax.inject.Inject;
 import java.lang.reflect.Field;
@@ -148,17 +147,13 @@ public class BaseController extends Controller {
             }
         }else if (request.accepts("application/json")) {
             //https://grokonez.com/json/resolve-json-infinite-recursion-problems-working-jackson
-            ObjectMapper mapper = new ObjectMapper();
             try {
                 if (modelList != null && modelList.size() > 0) {
-                    System.out.println(modelList.size());
+                    ObjectMapper mapper = new ObjectMapper();
                     String result = mapper.writer(filters).writeValueAsString(modelList);
                     res = Results.ok(Json.parse(result));
                 }else{
-                    ObjectNode node = Json.newObject();
-                    node.put("success", true);
-                    node.put("message", deleteOk);
-                    res = Results.ok(node);
+                    res = genericJsonResponse(true, deleteOk, 200);
                 }
             } catch (JsonProcessingException e) {
                 System.out.println("Error: " + e.getMessage());
@@ -174,17 +169,18 @@ public class BaseController extends Controller {
 
     public Result contentNegotiationError(Http.Request request, String errorMsg, Integer status){
         Result res = null;
+        Boolean b = false;
+        if (status == 404) b=true;
+
         if (request.accepts("application/xml")){
-            Content content = views.xml.Generic._generic.render(false,errorMsg);
+            Content content = views.xml.Generic._generic.render(b,errorMsg);
             res = Results.status(status,content);
         }else if (request.accepts("application/json")) {
-            ObjectNode objectNode = Json.newObject();
-            objectNode.put("success", false);
-            objectNode.put("message", errorMsg);
-            res = Results.status(status,objectNode);
+            res = genericJsonResponse(b, errorMsg, status);
         }else{
             res = Results.status(status,errorMsg);
         }
+
         return res;
 
     }
@@ -224,6 +220,17 @@ public class BaseController extends Controller {
             return true;
         }
         return false;
+    }
+
+    public Result deleteModelResult(Http.Request request,Object modelType){
+        Result res = null;
+        if (deleteModel(modelType)){
+            res = contentNegotiation(request, this);
+
+            if (res == null)
+                res = contentNegotiationError(request, noResults,404);
+        }
+        return res;
     }
 
     public boolean deleteModel(Object modelType){
@@ -270,6 +277,16 @@ public class BaseController extends Controller {
 
     public void clearModelList(){
         modelList.clear();
+    }
+
+    public Result genericJsonResponse(Boolean success, String errorMsg, Integer status){
+
+        ObjectNode objectNode = Json.newObject();
+        objectNode.put("success", success);
+        objectNode.put("message", errorMsg);
+        Result res = Results.status(status,objectNode);
+
+        return res;
     }
 
     public String getTextNode(Element e) {
