@@ -7,7 +7,7 @@
     <visibility>@recipe.getVisibility()</visibility>
     @views.xml.Tag.tags(recipe.getTagList())
     @views.xml.Ingredient.ingredients(recipe.getIngredientList())
-    <author>@recipe.getAuthor()</author>
+    <author>@views.xml.User._user(recipe.getAuthor())</author>
     @if(false){
     <vegans/>
     }

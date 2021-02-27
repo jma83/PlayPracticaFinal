@@ -1,0 +1,3 @@
+@(success: Boolean,message: String)
+<?xml version="1.0" encoding="utf-8" ?>
+@_generic(success,message)

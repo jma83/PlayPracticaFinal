@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import filters.UserTokenFilter;
 import models.*;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 import play.data.Form;
 import play.data.FormFactory;
 import play.libs.Json;
@@ -17,15 +15,10 @@ import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
 import play.twirl.api.Content;
+import utils.XMLManager;
 
 import javax.inject.Inject;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class BaseController extends Controller {
@@ -35,114 +28,21 @@ public class BaseController extends Controller {
     List<BaseModel> modelList = new ArrayList<>();
     String noResults = "No results!";
     final String formatError = "Error, incorrect format";
-    final String missingId = "Error, missing id";
+    final String forbbidenError = "Error, you don't have permission to modify this element";
     final String duplicatedError = "Error, Duplicated register";
     final String deleteIngredientError = "Error, Can't delete this Ingredient, is being used in one or more Recipes";
     final String deleteOk = "The model has been deleted successfully";
     FilterProvider filters = new SimpleFilterProvider().addFilter("userTokenFilter", new UserTokenFilter());
+    XMLManager xmlManager = new XMLManager();
 
-    public List<BaseModel> createWithXML(NodeList modelNode,Object instance){
-        List<BaseModel> models = new ArrayList<>();
-        //Fuente: https://stackoverflow.com/questions/15315368/java-reflection-get-all-private-fields
-        Field[] allFields = instance.getClass().getDeclaredFields();
-
-
-        for (int i = 0;i <modelNode.getLength();i++){
-            Element a = (Element) modelNode.item(i);
-            Object instance1 = null;
-            //Fuente: https://stackoverflow.com/questions/10470263/create-new-object-using-reflection
-            try {
-                instance1 = instance.getClass().newInstance();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-            for (Field field : allFields) {
-                NodeList nodeList2 = a.getElementsByTagName(field.getName());
-                Element e = (Element)nodeList2.item(0);
-                if (e != null) {
-                    String s = getTextNode(e);
-                    Object obj = castObject(s, field);
-                    if (!(obj instanceof BaseModel)) {
-                        invokeSetter(instance1, field.getName(), obj);
-                    } else {
-                        BaseModel bm = (BaseModel) obj;
-                        List<BaseModel> l = createWithXML(e.getElementsByTagName(bm.getTitleXML()), obj);
-                        invokeSetter(instance1, field.getName(), l);
-                    }
-                }
-
-            }
-            if (instance1!=null)
-            models.add((BaseModel) instance1);
-        }
-
-        return models;
-    }
-
-
-
-    //Fuente: https://java2blog.com/invoke-getters-setters-using-reflection-java/
-    public void invokeSetter(Object obj,String propertyName, Object variableValue){
-        try {
-            propertyName = propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
-            Method method = obj.getClass().getDeclaredMethod("set"+propertyName,variableValue.getClass());
-            try {
-                method.invoke(obj,variableValue);
-            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public Object castObject(String value, Field f) {
-        Object finalObj = value;
-        if (f.getType() == Integer.class){
-            finalObj = Integer.parseInt(value);
-        }else if (f.getType() == Date.class){
-            try {
-                finalObj = new SimpleDateFormat("dd/MM/yyyy").parse(value);
-            } catch (ParseException e) {
-                System.out.println("Error formato!");
-                e.printStackTrace();
-            }
-        }else if (f.getType() == List.class){
-            if (f.getName().equals("ingredientList")){
-                finalObj = new Ingredient();
-            }else if (f.getName().equals("recipeList")){
-                finalObj = new Recipe();
-            }else if (f.getName().equals("tagList")){
-                finalObj = new Tag();
-            }
-        }
-        return finalObj;
-    }
-
-    public Result getModel(Http.Request request, BaseController bc){
-        Result res = null;
-        if (modelList.size() == 0)
-            res = contentNegotiationError(request,noResults,404);
-
-        if (res == null)
-            res = contentNegotiation(request,bc);
-
-        if (res == null)
-            res = contentNegotiationError(request,this.formatError,400);
-
-        return res;
-    }
 
     public Result contentNegotiation(Http.Request request, BaseController baseController){
         Result res = null;
         if (request.accepts("application/xml")){
             if (modelList != null && modelList.size() > 0) {
-                res = Results.ok(baseController.getContentXML());
+                res = Results.ok(baseController.getContentXML(modelList));
             }else{
-                Content content = views.xml.Generic._generic.render(true,deleteOk);
+                Content content = views.xml.Generic.generic.render(true,deleteOk);
                 res = Results.ok(content);
             }
         }else if (request.accepts("application/json")) {
@@ -156,7 +56,7 @@ public class BaseController extends Controller {
                     res = genericJsonResponse(true, deleteOk, 200);
                 }
             } catch (JsonProcessingException e) {
-                System.out.println("Error: " + e.getMessage());
+                System.err.println("Error: " + e.getMessage());
                 contentNegotiationError(request,e.getMessage(),500);
             }
 
@@ -173,7 +73,7 @@ public class BaseController extends Controller {
         if (status == 404) b=true;
 
         if (request.accepts("application/xml")){
-            Content content = views.xml.Generic._generic.render(b,errorMsg);
+            Content content = views.xml.Generic.generic.render(b,errorMsg);
             res = Results.status(status,content);
         }else if (request.accepts("application/json")) {
             res = genericJsonResponse(b, errorMsg, status);
@@ -197,11 +97,55 @@ public class BaseController extends Controller {
         return null;
     }
 
+    public Result getModel(Http.Request request, BaseController bc, List<? extends BaseModel> list){
+        Result res = null;
+        if (list != null && list.size() > 0)
+            modelList.addAll(list);
+
+        if (modelList.size() == 0)
+            res = contentNegotiationError(request,noResults,404);
+
+        if (res == null)
+            res = contentNegotiation(request,bc);
+
+        if (res == null)
+            res = contentNegotiationError(request,this.formatError,400);
+
+        return res;
+    }
+
+    public Result getModelId(Http.Request request, BaseController baseController, BaseModel baseModel){
+        Result res = null;
+        if (baseModel != null) {
+            modelList.add(baseModel);
+            res = contentNegotiation(request,baseController);
+        }
+
+        if (res == null)
+            res = contentNegotiationError(request,noResults,404);
+
+        return res;
+    }
+
+    public Result saveModelResult(Http.Request request, BaseController baseController, Object modelType, int count, boolean update) {
+        Result res = null;
+        if (count == 0) {
+            if (update && updateModel(modelType, count)){
+                res = contentNegotiation(request, baseController);
+            }else if (!update && saveModel(modelType, count)){
+                res = contentNegotiation(request, baseController);
+            }
+
+            if (res == null)
+                res = contentNegotiationError(request, formatError, 400);
+        }else{
+            res = contentNegotiationError(request, duplicatedError, 406);
+        }
+        return res;
+    }
 
     public boolean saveModel(Object modelType, int count) {
-        if (count != 0) return false;
-
-        if (modelType!=null){
+        if (modelType!=null && count == 0){
             BaseModel bm = (BaseModel) modelType;
             modelList.add(bm);
             bm.save();
@@ -211,9 +155,7 @@ public class BaseController extends Controller {
     }
 
     public boolean updateModel(Object modelType, int count){
-        if (count != 0) return false;
-
-        if (modelType!=null) {
+        if (modelType!=null && count == 0) {
             BaseModel modelUpdate = (BaseModel) modelType;
             modelList.add(modelUpdate);
             modelUpdate.update();
@@ -222,34 +164,37 @@ public class BaseController extends Controller {
         return false;
     }
 
-    public Result deleteModelResult(Http.Request request,Object modelType){
+    public Result deleteModelResult(Http.Request request,BaseController baseController,Object modelType){
         Result res = null;
-        if (deleteModel(modelType)){
-            res = contentNegotiation(request, this);
+        if (modelType!=null) {
+            if (deleteModel(modelType))
+                res = contentNegotiation(request, baseController);
 
             if (res == null)
-                res = contentNegotiationError(request, noResults,404);
+                res = contentNegotiationError(request, deleteIngredientError, 400);
+
         }
+        if (res == null)
+            res = contentNegotiationError(request, noResults, 404);
+
         return res;
     }
 
     public boolean deleteModel(Object modelType){
-        if (modelType!=null) {
-            try {
-                BaseModel modelDelete = (BaseModel) modelType;
+        try {
+            BaseModel modelDelete = (BaseModel) modelType;
+            if (modelType != null) {
                 modelDelete.delete();
                 return true;
-
-            }catch (Exception e){
-                System.out.println(e.getMessage());
             }
-
+        }catch (Exception e){
+            System.out.println(e.getMessage());
         }
         return false;
     }
 
-    protected Long checkUserId(User u, String id, Integer type){
-        if (u == null) return -1L;
+    public Long checkUserId(User u, String id, Integer type){
+        if (u == null || id== null || type==null) return -1L;
 
         Long res = checkSelfId(u,id,type);
         if (res != -1) return res;
@@ -262,22 +207,22 @@ public class BaseController extends Controller {
         return res;
     }
 
-    protected Long checkSelfId(User u, String id, Integer type){
-        if (type == 1) {
-            if ("self".equals(id) || id.equals(Long.toString(u.getRecipeBook().getId()))) {
-                return u.getRecipeBook().getId();
-            }
-        }else{
-            if ("self".equals(id) || id.equals(Long.toString(u.getId()))) {
-                return u.getId();
+    public Long checkSelfId(User u, String id, Integer type){
+        String self = "self";
+        if (u!=null && id !=null && type!=null)  {
+            if (type == 1) {
+                if (self.equals(id) || id.equals(Long.toString(u.getRecipeBook().getId()))) {
+                    return u.getRecipeBook().getId();
+                }
+            } else {
+                if (self.equals(id) || id.equals(Long.toString(u.getId()))) {
+                    return u.getId();
+                }
             }
         }
         return -1L;
     }
 
-    public void clearModelList(){
-        modelList.clear();
-    }
 
     public Result genericJsonResponse(Boolean success, String errorMsg, Integer status){
 
@@ -289,12 +234,12 @@ public class BaseController extends Controller {
         return res;
     }
 
-    public String getTextNode(Element e) {
-        return e.getChildNodes().item(0).getNodeValue();
-    }
-
-    public Content getContentXML(){
+    public Content getContentXML(List<BaseModel> modelList){
         return null;
     }
+    public void clearModelList(){
+        modelList.clear();
+    }
+
 
 }

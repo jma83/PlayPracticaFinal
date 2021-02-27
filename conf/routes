@@ -10,6 +10,8 @@ DELETE /user/:id controllers.UserController.deleteUser(request: Request, id: Str
 
 POST /recipe controllers.RecipeController.createRecipe(request: Request)
 POST /recipe/:id/ingredientList controllers.RecipeController.addIngredient(request: Request, id: Long)
+POST /recipe/:id/ingredientList/:id2 controllers.RecipeController.addIngredientById(request: Request, id: Long, id2: Long)
+
 
 GET /recipe controllers.RecipeController.getRecipe(request: Request)
 GET /recipe/:id controllers.RecipeController.getRecipeId(request: Request, id: Long)
@@ -17,7 +19,6 @@ GET /recipe/:id/ingredientList controllers.RecipeController.getIngredient(reques
 GET /recipe/:id/ingredientList/:id2 controllers.RecipeController.getIngredientId(request: Request, id: Long, id2: Long)
 
 PUT /recipe/:id controllers.RecipeController.updateRecipe(request: Request, id: Long)
-PUT /recipe/:id/ingredientList/:id2 controllers.RecipeController.editIngredient(request: Request, id: Long, id2: Long)
 DELETE /recipe/:id controllers.RecipeController.deleteRecipe(request: Request, id: Long)
 DELETE /recipe/:id/ingredientList/:id2 controllers.RecipeController.removeIngredient(request: Request, id: Long, id2: Long)
 

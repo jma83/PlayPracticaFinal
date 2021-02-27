@@ -45,14 +45,14 @@ public class BirthdateValidator extends Constraints.Validator<Date> implements C
         if (diff < 0){
             //System.err.println("Birthdate can't be greater than the current one");
             constraintContext.disableDefaultConstraintViolation();
-            constraintContext.buildConstraintViolationWithTemplate("Birthdate must be greater than the current one").addConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Birthdate can't be greater than the current one").addConstraintViolation();
             return false;
         }
 
         if (diff < 18){
             //System.err.println("Birthdate must be greater or equal to 18 years");
             constraintContext.disableDefaultConstraintViolation();
-            constraintContext.buildConstraintViolationWithTemplate("Birthdate must be greater than 18 years").addConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate("Birthdate must be greater than 16 years").addConstraintViolation();
             return false;
         }
 

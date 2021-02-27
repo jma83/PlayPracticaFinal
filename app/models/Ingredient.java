@@ -28,6 +28,15 @@ public class Ingredient extends BaseModel {
     public static List<Ingredient> findByName(String name){
         return find.query().where().eq("name", name).findList();
     }
+    public static List<Ingredient> findByNameAndRecipeId(String name, Long idRecipe){
+        return find.query().where().eq("name", name).in("recipeList.id", idRecipe).findList();
+    }
+    public static List<Ingredient> findByRecipeId(Long idRecipe){
+        return find.query().where().in("recipeList.id",idRecipe).findList();
+    }
+    public static Ingredient findByIdAndRecipeId(Long id, Long idRecipe){
+        return find.query().where().eq("id", id).in("recipeList.id",idRecipe).findOne();
+    }
     public static List<Ingredient> findAndMergeIngredientList(List<Ingredient> ingredientList){
         List<String> listNames = new ArrayList<>();
         for (Ingredient i:ingredientList) {
@@ -45,9 +54,6 @@ public class Ingredient extends BaseModel {
         }
         return ingredientList;
 
-    }
-    public static List<Ingredient> findByTag(String tag){
-        return find.query().where().eq("tag", tag).findList();
     }
 
     @Required

@@ -11,6 +11,7 @@ import io.ebean.ExpressionList;
 import io.ebean.Finder;
 import org.checkerframework.common.value.qual.BoolVal;
 import play.data.validation.Constraints.*;
+import utils.RecipeSearch;
 import validators.Description;
 import validators.Name;
 
@@ -32,40 +33,52 @@ public class Recipe extends BaseModel {
     public static Recipe findById(long id){
         return find.byId(id);
     }
-    public static List<Recipe> findByIngredient(Ingredient i, Long id){
-        return find.query().where().in("ingredientList", i).eq("id",id).findList();
+    public static List<Recipe> findByIngredient(Ingredient i, Long idRecipe){
+        return find.query().where().in("ingredientList", i).eq("id",idRecipe).findList();
     }
-    public static List<Recipe> findByNameUser(String name, User u){
-        return find.query().where().eq("name", name).eq("author", u).findList();
+    public static Recipe findByIngredientId(Long id, Long idRecipe){
+        return find.query().where().in("ingredientList.id", id).eq("id",idRecipe).findOne();
+    }
+    public static List<Recipe> findByNameAndUser(String name, User u, Long id){
+        return find.query().where().eq("name", name).in("author", u).ne("id",id).findList();
+    }
+    public static List<Recipe> findByRecipeBookId(Long id){
+        return find.query().where().eq("recipeBookList.id", id).findList();
+    }
+    public static Recipe findByIdAndRecipeBookId(Long id, Long id2){
+        return find.query().where().eq("id", id).eq("recipeBookList.id", id2).findOne();
     }
 
-    public static List<Recipe> findByFilter(String name,String description, String d1, String d2,List<Tag> tag,List<Ingredient> tag2,List<Ingredient> ingredientList, Long authorId, String authorName){
+
+    public static List<Recipe> findByFilter(RecipeSearch recipeSearch){
         Date date1 = null;
-        if (d1 != null)
-            date1 = Recipe.toDate(d1);
         Date date2 = null;
-        if (d2 != null)
-            date2 = Recipe.toDate(d2);
+        if (recipeSearch.getDateGreater() != null)
+            date1 = Recipe.toDate(recipeSearch.getDateGreater());
+        if (recipeSearch.getDateLower() != null)
+            date2 = Recipe.toDate(recipeSearch.getDateLower());
 
         ExpressionList<Recipe> recipeQuery = find.query().where();
-        if (name!=null)
-            recipeQuery = recipeQuery.like("name", name+"%");
-        if (description!=null)
-            recipeQuery = recipeQuery.like("description", description+"%")  ;
-        if (tag!=null && tag.size() > 0)
-            recipeQuery = recipeQuery.in("tagList", tag);
+        if (recipeSearch.getName()!=null)
+            recipeQuery = recipeQuery.like("name", recipeSearch.getName()+"%");
+        if (recipeSearch.getDescription()!=null)
+            recipeQuery = recipeQuery.like("description", recipeSearch.getDescription()+"%")  ;
+        if (recipeSearch.getRecipeTag()!=null)
+            recipeQuery = recipeQuery.in("tagList.tagName", recipeSearch.getRecipeTag());
         if (date1!=null)
             recipeQuery = recipeQuery.ge("whenCreated", date1);
         if (date2!=null)
             recipeQuery = recipeQuery.le("whenCreated", date2);
-        if (tag2!=null && tag2.size() > 0)
-            recipeQuery = recipeQuery.in("ingredientList", tag2);
-        if (ingredientList!=null && ingredientList.size() > 0)
-            recipeQuery = recipeQuery.in("ingredientList", ingredientList);
-        if (authorId!=null)
-            recipeQuery = recipeQuery.in("author.id", authorId);
-        if (authorName!=null)
-            recipeQuery = recipeQuery.in("author.username", authorName);
+        if (recipeSearch.getIngredientId()!=null)
+            recipeQuery = recipeQuery.in("ingredientList.id", recipeSearch.getIngredientIdLong());
+        if (recipeSearch.getIngredientName()!=null)
+            recipeQuery = recipeQuery.in("ingredientList.name", recipeSearch.getIngredientName());
+        if (recipeSearch.getIngredientTag()!=null)
+            recipeQuery = recipeQuery.in("ingredientList.tagList.tagName", recipeSearch.getIngredientTag());
+        if (recipeSearch.getAuthorId()!=null)
+            recipeQuery = recipeQuery.in("author.id", recipeSearch.getAuthorIdLong());
+        if (recipeSearch.getAuthorName()!=null)
+            recipeQuery = recipeQuery.in("author.username", recipeSearch.getAuthorName());
 
         return recipeQuery.findList();
     }
@@ -110,21 +123,13 @@ public class Recipe extends BaseModel {
     public void update(Recipe recipe){
         this.name = recipe.getName();
         this.description = recipe.getDescription();
-        this.author = recipe.getAuthor();
         this.visibility = recipe.getVisibility();
         this.tagList = recipe.getTagList();
         this.ingredientList = recipe.getIngredientList();
-    }
-
-    public boolean checkIngredient(Ingredient ingredient){
-        Boolean check = false;
-        for (Ingredient i:ingredientList) {
-            if (i.getName().equals(ingredient.getName())){
-                check = true;
-                break;
-            }
-        }
-        return check;
+        if (recipe.getAuthor()!=null)
+            this.author = recipe.getAuthor();
+        else
+            this.author = this.getAuthor();
     }
 
     public static Date toDate(String date){

@@ -4,6 +4,7 @@ import auth.Attrs;
 import auth.PassArgAction;
 import auth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
+import models.BaseModel;
 import models.User;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -25,15 +26,16 @@ public class UserController extends BaseController {
             User u = form.get();
             u.init();
             int count = User.findUsername(u.getUsername()).size();
-            if (saveModel(u, count)){
+            if (saveModel(u, count)) {
                 u.getUserToken().setVisible(true);
                 res = contentNegotiation(request, this);
             }
+            if (res == null)
+                res = contentNegotiationError(request, duplicatedError, 406);
+
         }
 
-        if (res == null)
-            res = contentNegotiationError(request,duplicatedError,406);
-
+        assert res != null;
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
@@ -41,8 +43,7 @@ public class UserController extends BaseController {
     public Result getUser(Http.Request request){    //OK
         clearModelList();
 
-        modelList.addAll(User.findAll());
-        Result res = this.getModel(request,this);
+        Result res = this.getModel(request,this,User.findAll());
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
 
@@ -52,17 +53,10 @@ public class UserController extends BaseController {
     @With(PassArgAction.class)
     public Result getUserId(Http.Request request, String id){   //OK
         clearModelList();
-        Result res = null;
 
         User userRequest = request.attrs().get(Attrs.USER);
         User u = User.findById(checkUserId(userRequest,id,0));
-        if (u != null) {
-            modelList.add(u);
-            res = contentNegotiation(request,this);
-        }
-
-        if (res == null)
-            res = contentNegotiationError(request,noResults,404);
+        Result res = getModelId(request,this,u);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -81,15 +75,11 @@ public class UserController extends BaseController {
             if (userUpdate != null) {
                 userUpdate.update(form.get());
                 int count = User.findUsernameId(userUpdate.getUsername(), userUpdate.getId()).size();
-                if (updateModel(userUpdate, count))
-                    res = contentNegotiation(request, this);
+                res = saveModelResult(request,this,userUpdate, count,true);
             }
             if (res == null)
                 res = contentNegotiationError(request,noResults,404);
         }
-
-        if (res == null)
-            res = contentNegotiationError(request,formatError,400);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -101,7 +91,7 @@ public class UserController extends BaseController {
         User userRequest = request.attrs().get(Attrs.USER);
         User usuFinal = User.findById(checkUserId(userRequest,id,0));
 
-        Result res = deleteModelResult(request,usuFinal);
+        Result res = deleteModelResult(request,this,usuFinal);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -113,7 +103,7 @@ public class UserController extends BaseController {
 
         if (doc != null){
             NodeList modelNode = doc.getElementsByTagName(user.getTitleXML());
-            User u = (User) createWithXML(modelNode,user).get(0);
+            User u = (User) this.xmlManager.createWithXML(modelNode,user).get(0);
             form.fill(u);
         }else if (json != null){
             form = form.bindFromRequest(request);
@@ -125,11 +115,10 @@ public class UserController extends BaseController {
     }
 
 
-    public Content getContentXML(){
+    public Content getContentXML(List<BaseModel> modelList){
         User[] array = new User[modelList.size()];
         modelList.toArray(array);
-        Content content = views.xml.User.users.render(Arrays.asList(array));
-        return content;
+        return views.xml.User.users.render(Arrays.asList(array));
     }
 }
 
