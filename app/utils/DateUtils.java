@@ -1,5 +1,7 @@
 package utils;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -12,6 +14,18 @@ public class DateUtils {
         long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
         int result = Math.toIntExact(diff / 365);
         return result;
+    }
+
+    public static Date convertTimestamp(Date currentDate){
+        SimpleDateFormat dateFormat = new SimpleDateFormat();
+        String str = dateFormat.format(currentDate);
+        try {
+            Date d = dateFormat.parse(str);
+            return d;
+        } catch (ParseException e) {
+            System.err.println(e.getMessage());
+        }
+        return currentDate;
     }
 
 }

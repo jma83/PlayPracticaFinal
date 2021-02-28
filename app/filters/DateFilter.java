@@ -6,13 +6,11 @@ import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.PropertyWriter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import models.BaseModel;
-import models.User;
 import utils.DateUtils;
 
 import java.util.Date;
 
-//https://www.baeldung.com/jackson-serialize-field-custom-criteria
-public class UserTokenFilter extends SimpleBeanPropertyFilter {
+public class DateFilter extends SimpleBeanPropertyFilter {
     @Override
     protected boolean include(BeanPropertyWriter writer) {
         return super.include(writer);
@@ -26,22 +24,20 @@ public class UserTokenFilter extends SimpleBeanPropertyFilter {
     @Override
     public void serializeAsField(Object pojo, JsonGenerator jgen, SerializerProvider provider, PropertyWriter writer) throws Exception {
         if (include(writer)) {
-            if (!writer.getName().equals("userToken")) {
+            if (writer.getName().equals("whenCreated")) {
+                Date dateC = ((BaseModel) pojo).getWhenCreated();
+                ((BaseModel) pojo).setWhenCreated(DateUtils.convertTimestamp(dateC));
+                return;
+            }
+            if (writer.getName().equals("whenUpdated")) {
+                Date dateU = ((BaseModel) pojo).getWhenUpdated();
+                ((BaseModel) pojo).setWhenUpdated(DateUtils.convertTimestamp(dateU));
                 writer.serializeAsField(pojo, jgen, provider);
                 return;
             }
-            if (!writer.getName().equals("birthdate")) {
-                Date dateU = ((User) pojo).getBirthdate();
-                ((User) pojo).setBirthdate(DateUtils.convertTimestamp(dateU));
-                writer.serializeAsField(pojo, jgen, provider);
-                return;
-            }
-            Boolean visible = ((User) pojo).getUserToken().getVisible();
-            if (visible) {
-                writer.serializeAsField(pojo, jgen, provider);
-            }else{
-                writer.serializeAsOmittedField(pojo, jgen, provider);
-            }
+            writer.serializeAsField(pojo, jgen, provider);
+            return;
+
         } else if (!jgen.canOmitFields()) {
             writer.serializeAsOmittedField(pojo, jgen, provider);
         }

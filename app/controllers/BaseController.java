@@ -9,6 +9,8 @@ import filters.UserTokenFilter;
 import models.*;
 import play.data.Form;
 import play.data.FormFactory;
+import play.i18n.Lang;
+import play.i18n.MessagesApi;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -16,6 +18,7 @@ import play.mvc.Result;
 import play.mvc.Results;
 import play.twirl.api.Content;
 import controllers.src.XMLManager;
+import utils.MessageUtils;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -26,25 +29,31 @@ public class BaseController extends Controller {
     @Inject
     FormFactory formFactory;
     List<BaseModel> modelList = new ArrayList<>();
-    String noResults = "No results!";
-    final String formatError = "Error, incorrect format";
-    final String forbiddenError = "Error, you don't have permission to modify this element";
-    final String duplicatedError = "Error, Duplicated register";
-    final String deleteIngredientError = "Error, Can't delete this Ingredient, is being used in one or more Recipes";
-    final String deleteOk = "The model has been deleted successfully";
+    final String langHeader = "Accept-Language";
     FilterProvider filters = new SimpleFilterProvider().addFilter("userTokenFilter", new UserTokenFilter());
     XMLManager xmlManager = new XMLManager();
+    private final MessagesApi messagesApi;
+    String lang;
+    public BaseController(){
+        this.messagesApi=null;
+    }
+    @Inject
+    public BaseController(MessagesApi messagesApi){
+        this.messagesApi=messagesApi;
+    }
 
-
-    public Result contentNegotiation(Http.Request request, BaseController baseController){
-        Result res = null;
+    public Result contentNegotiation(Http.Request request, BaseController baseController,Boolean delete){
+        Result res;
         if (request.accepts("application/xml")){
+            Content content;
             if (modelList != null && modelList.size() > 0) {
-                res = Results.ok(baseController.getContentXML(modelList));
-            }else{
-                Content content = views.xml.Generic.generic.render(true,deleteOk);
-                res = Results.ok(content);
+                content =baseController.getContentXML(modelList);
+            }else if (delete){
+                content = views.xml.Generic.generic.render(true,getMessage(MessageUtils.deleteOk));
+            }else {
+                content = views.xml.Generic.generic.render(true,getMessage(MessageUtils.noResults));
             }
+            res = Results.ok(content);
         }else if (request.accepts("application/json")) {
             //https://grokonez.com/json/resolve-json-infinite-recursion-problems-working-jackson
             try {
@@ -52,16 +61,18 @@ public class BaseController extends Controller {
                     ObjectMapper mapper = new ObjectMapper();
                     String result = mapper.writer(filters).writeValueAsString(modelList);
                     res = Results.ok(Json.parse(result));
+                }else if (delete){
+                    res = genericJsonResponse(true, getMessage(MessageUtils.deleteOk), 200);
                 }else{
-                    res = genericJsonResponse(true, deleteOk, 200);
+                    res = genericJsonResponse(true, getMessage(MessageUtils.noResults), 200);
                 }
             } catch (JsonProcessingException e) {
                 System.err.println("Error: " + e.getMessage());
-                contentNegotiationError(request,e.getMessage(),500);
+                res = contentNegotiationError(request,getMessage(MessageUtils.internalError),500);
             }
 
         }else{
-            res = Results.badRequest("Unsupported format");
+            res = contentNegotiationError(request,getMessage(MessageUtils.unsupportedError),400);
         }
 
         return res;
@@ -69,8 +80,8 @@ public class BaseController extends Controller {
 
     public Result contentNegotiationError(Http.Request request, String errorMsg, Integer status){
         Result res;
+
         boolean b = false;
-        if (status == 404) b=true;
 
         if (request.accepts("application/xml")){
             Content content = views.xml.Generic.generic.render(b,errorMsg);
@@ -87,12 +98,12 @@ public class BaseController extends Controller {
 
     public Result checkFormErrors(Http.Request request,Form<? extends BaseModel> form){
         if (form==null)
-            return contentNegotiationError(request,noResults,404);
+            return contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
 
         if (form.hasErrors()){
             System.err.println(form.errorsAsJson());
             System.err.println(form.errors());
-            return contentNegotiationError(request,form.errors().toString(),400);
+            return contentNegotiationError(request,Json.stringify(form.errorsAsJson()),400);
         }
         return null;
     }
@@ -102,14 +113,10 @@ public class BaseController extends Controller {
         if (list != null && list.size() > 0)
             modelList.addAll(list);
 
-        if (modelList.size() == 0)
-            res = contentNegotiationError(request,noResults,404);
+        res = contentNegotiation(request,bc,false);
 
         if (res == null)
-            res = contentNegotiation(request,bc);
-
-        if (res == null)
-            res = contentNegotiationError(request,this.formatError,400);
+            res = contentNegotiationError(request,getMessage(MessageUtils.formatError),400);
 
         return res;
     }
@@ -118,11 +125,11 @@ public class BaseController extends Controller {
         Result res = null;
         if (baseModel != null) {
             modelList.add(baseModel);
-            res = contentNegotiation(request,baseController);
+            res = contentNegotiation(request,baseController,false);
         }
 
         if (res == null)
-            res = contentNegotiationError(request,noResults,404);
+            res = contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
 
         return res;
     }
@@ -131,15 +138,15 @@ public class BaseController extends Controller {
         Result res = null;
         if (count == 0) {
             if (update && updateModel(modelType, count)){
-                res = contentNegotiation(request, baseController);
+                res = contentNegotiation(request, baseController,false);
             }else if (!update && saveModel(modelType, count)){
-                res = contentNegotiation(request, baseController);
+                res = contentNegotiation(request, baseController,false);
             }
 
             if (res == null)
-                res = contentNegotiationError(request, formatError, 400);
+                res = contentNegotiationError(request, getMessage(MessageUtils.formatError), 400);
         }else{
-            res = contentNegotiationError(request, duplicatedError, 406);
+            res = contentNegotiationError(request, getMessage(MessageUtils.duplicatedError), 406);
         }
         return res;
     }
@@ -168,14 +175,14 @@ public class BaseController extends Controller {
         Result res = null;
         if (modelType!=null) {
             if (deleteModel(modelType))
-                res = contentNegotiation(request, baseController);
+                res = contentNegotiation(request, baseController,true);
 
             if (res == null)
-                res = contentNegotiationError(request, deleteIngredientError, 400);
+                res = contentNegotiationError(request, getMessage(MessageUtils.deleteIngredientError), 400);
 
         }
         if (res == null)
-            res = contentNegotiationError(request, noResults, 404);
+            res = contentNegotiationError(request, getMessage(MessageUtils.notFound), 404);
 
         return res;
     }
@@ -236,9 +243,13 @@ public class BaseController extends Controller {
     public Content getContentXML(List<BaseModel> modelList){
         return null;
     }
-    public void clearModelList(){
+    public void initRequest(Http.Request request){
+        String defaultLang = Lang.defaultLang().language();
+        lang = request.header(langHeader).orElse(defaultLang);
         modelList.clear();
     }
 
-
+    public String getMessage(String message){
+        return this.messagesApi.get(Lang.apply(lang),message);
+    }
 }

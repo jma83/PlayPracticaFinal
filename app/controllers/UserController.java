@@ -9,15 +9,26 @@ import models.User;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import play.data.Form;
+import play.i18n.MessagesApi;
 import play.mvc.*;
 import play.twirl.api.Content;
+import utils.MessageUtils;
+
+import javax.inject.Inject;
 import java.util.*;
 
 public class UserController extends BaseController {
     String headerCount = "X-User-Count";
 
+    public UserController() {
+        super();
+    }
+    @Inject
+    public UserController(MessagesApi messagesApi){
+        super(messagesApi);
+    }
     public Result createUser(Http.Request request){ //OK
-        clearModelList();
+        initRequest(request);
         Form<User> form = formFactory.form(User.class);
         form = validateRequestForm(request,form);
         Result res = checkFormErrors(request,form);
@@ -28,10 +39,10 @@ public class UserController extends BaseController {
             int count = User.findUsername(u.getUsername()).size();
             if (saveModel(u, count)) {
                 u.getUserToken().setVisible(true);
-                res = contentNegotiation(request, this);
+                res = contentNegotiation(request, this,false);
             }
             if (res == null)
-                res = contentNegotiationError(request, duplicatedError, 406);
+                res = contentNegotiationError(request, getMessage(MessageUtils.duplicatedError), 406);
 
         }
 
@@ -41,7 +52,7 @@ public class UserController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result getUser(Http.Request request){    //OK
-        clearModelList();
+        initRequest(request);
 
         Result res = this.getModel(request,this,User.findAll());
 
@@ -52,7 +63,7 @@ public class UserController extends BaseController {
     @Security.Authenticated(UserAuthenticator.class)
     @UserArg
     public Result getUserId(Http.Request request, String id){   //OK
-        clearModelList();
+        initRequest(request);
 
         User userRequest = request.attrs().get(Attrs.USER);
         User u = User.findById(checkUserId(userRequest,id,0));
@@ -64,7 +75,7 @@ public class UserController extends BaseController {
     @Security.Authenticated(UserAuthenticator.class)
     @UserArg
     public Result updateUser(Http.Request request, String id){  //Ok
-        clearModelList();
+        initRequest(request);
         Form<User> form = formFactory.form(User.class);
         form = validateRequestForm(request,form);
         Result res = checkFormErrors(request,form);
@@ -78,7 +89,7 @@ public class UserController extends BaseController {
                 res = saveModelResult(request,this,userUpdate, count,true);
             }
             if (res == null)
-                res = contentNegotiationError(request,noResults,404);
+                res = contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
         }
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
@@ -87,13 +98,13 @@ public class UserController extends BaseController {
     @Security.Authenticated(UserAuthenticator.class)
     @UserArg
     public Result deleteUser(Http.Request request, String id){  //Ok
-        clearModelList();
+        initRequest(request);
         User userRequest = request.attrs().get(Attrs.USER);
         User usuFinal = User.findById(checkSelfId(userRequest,id,0));
         Result res = null;
         if (usuFinal!=null) res = deleteModelResult(request,this,usuFinal);
 
-        if (res == null) res = contentNegotiationError(request,this.forbiddenError,403);
+        if (res == null) res = contentNegotiationError(request,getMessage(MessageUtils.forbiddenError),403);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }

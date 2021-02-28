@@ -2,6 +2,7 @@ package validators;
 
 import play.data.validation.Constraints;
 import play.libs.F;
+import utils.MessageUtils;
 import utils.StringUtils;
 
 import javax.validation.ConstraintValidator;
@@ -17,18 +18,18 @@ public class DescriptionValidator extends Constraints.Validator<String> implemen
     public boolean isValid(String object, javax.validation.ConstraintValidatorContext constraintContext) {
         if (object==null || "".equals(object)) {
             constraintContext.disableDefaultConstraintViolation();
-            constraintContext.buildConstraintViolationWithTemplate("Description can't be empty or null").addConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate(MessageUtils.descriptionNull).addConstraintViolation();
             return false;
         }
 
         if (object.length() < 2 || object.length() > 150) {
             constraintContext.disableDefaultConstraintViolation();
-            constraintContext.buildConstraintViolationWithTemplate("Description must be between 2 and 150 characters").addConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate(MessageUtils.descriptionLength).addConstraintViolation();
             return false;
         }
         if (!StringUtils.isAlphanumeric(object)){
             constraintContext.disableDefaultConstraintViolation();
-            constraintContext.buildConstraintViolationWithTemplate("Invalid description format").addConstraintViolation();
+            constraintContext.buildConstraintViolationWithTemplate(MessageUtils.descriptionFormat).addConstraintViolation();
             return false;
         }
 

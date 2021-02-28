@@ -1,0 +1,31 @@
+error.noResults=No results!
+error.notFound=Error. Resource not found.
+error.formatError=Error. Incorrect format
+error.forbiddenError=Error. You don't have permission to modify this element
+error.duplicatedError=Error. Duplicated register
+error.deleteIngredientError=Error. Can't delete this Ingredient, is being used in one or more Recipes
+error.internalError=Internal server error. Please, try again later
+error.unsupportedError=Error. Unsupported format. Try with XML or JSON
+
+error.usernameFormat=Username must contain at least one upper case, one lower case and one number
+error.usernameAlphanumeric=Username must only have alphanumeric characters
+error.usernameLength=Username must be between 3 and 20 characters
+error.usernameWhitespaces=Username can't contain whitespaces.
+error.usernameNull=Username can't be empty or null
+
+error.pricePositive=Price can't be lesser than 0
+
+error.nameNull=Name can't be empty or null
+error.nameLength=Name must be between 2 and 30 characters
+error.nameFormat=Invalid name format
+
+error.descriptionNull=Description can't be empty or null
+error.descriptionLength=Description must be between 2 and 150 characters
+error.descriptionFormat=Invalid description format
+
+error.birthdateNull=Birthdate can't be empty or null
+error.birthdateFormat=Birthdate must follow the format: yyyy-MM-dd
+error.birthdatePositiveRange=Birthdate can't be greater than the current one
+error.birthdateAgeRange=Birthdate must be greater than 16 years
+
+ok.deleteOk=The element has been deleted successfully

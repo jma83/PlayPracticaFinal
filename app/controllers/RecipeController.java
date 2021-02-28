@@ -8,11 +8,15 @@ import models.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import play.data.Form;
+import play.i18n.MessagesApi;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Security;
 import play.twirl.api.Content;
 import controllers.src.RecipeSearch;
+import utils.MessageUtils;
+
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,11 +27,18 @@ public class RecipeController extends BaseController {
 
     String headerCount = "X-Recipe-Count";
     Boolean checkFilter = false;
+    public RecipeController() {
+        super();
+    }
+    @Inject
+    public RecipeController(MessagesApi messagesApi){
+        super(messagesApi);
+    }
 
     @Security.Authenticated(UserAuthenticator.class)
     @UserArg
     public Result createRecipe(Http.Request request){   //Ok
-        clearModelList();
+        initRequest(request);
         Form<Recipe> form = formFactory.form(Recipe.class);
         form = validateRequestForm(request,form);
         Result res = checkFormErrors(request,form);
@@ -48,7 +59,7 @@ public class RecipeController extends BaseController {
     @Security.Authenticated(UserAuthenticator.class)
     @UserArg
     public Result getRecipe(Http.Request request){  //OK
-        clearModelList();
+        initRequest(request);
         User user = request.attrs().get(Attrs.USER);
         List<Recipe> recipeList = this.filterRecipe(request,user);
         Result res;
@@ -64,7 +75,7 @@ public class RecipeController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result getRecipeId(Http.Request request, Long id){   //OK
-        clearModelList();
+        initRequest(request);
 
         Recipe r = Recipe.findById(id);
         Result res = getModelId(request,this,r);
@@ -74,7 +85,7 @@ public class RecipeController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result updateRecipe(Http.Request request, Long id){
-        clearModelList();
+        initRequest(request);
         Form<Recipe> form = formFactory.form(Recipe.class);
         form = validateRequestForm(request,form);
         Result res = checkFormErrors(request,form);
@@ -90,7 +101,7 @@ public class RecipeController extends BaseController {
                 res = saveModelResult(request,this,recipeUpdate, count,true);
             }
             if (res == null)
-                res = contentNegotiationError(request,noResults,404);
+                res = contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
         }
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
@@ -99,14 +110,14 @@ public class RecipeController extends BaseController {
     @Security.Authenticated(UserAuthenticator.class)
     @UserArg
     public Result deleteRecipe(Http.Request request, Long id){
-        clearModelList();
+        initRequest(request);
         Recipe recFinal = Recipe.findById(id);
         User userRequest = request.attrs().get(Attrs.USER);
         Result res = null;
         if(userRequest == recFinal.getAuthor())
             res = deleteModelResult(request,this,recFinal);
 
-        if (res == null) res = contentNegotiationError(request,this.forbiddenError,403);
+        if (res == null) res = contentNegotiationError(request,getMessage(MessageUtils.forbiddenError),403);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -116,7 +127,7 @@ public class RecipeController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result addIngredient(Http.Request request, Long id){
-        clearModelList();
+        initRequest(request);
         IngredientController ingredientController = new IngredientController();
         Form<Ingredient> form = formFactory.form(Ingredient.class);
         form = ingredientController.validateRequestForm(request, form);
@@ -134,7 +145,7 @@ public class RecipeController extends BaseController {
                 res = saveModelResult(request, this, recipe, count,true);
             }
             if (res == null)
-                res = contentNegotiationError(request,noResults,404);
+                res = contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
         }
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
@@ -142,7 +153,7 @@ public class RecipeController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result addIngredientById(Http.Request request, Long id, Long id2){
-        clearModelList();
+        initRequest(request);
         Result res = null;
         Recipe recipe = Recipe.findById(id);
         Ingredient ingredient = Ingredient.findById(id2);
@@ -156,14 +167,14 @@ public class RecipeController extends BaseController {
             res = saveModelResult(request,this,recipe,count,true);
         }
         if (res == null)
-            res = contentNegotiationError(request,noResults,404);
+            res = contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result removeIngredient(Http.Request request, Long id, Long id2){
-        clearModelList();
+        initRequest(request);
         Result res = null;
         Recipe recipe = Recipe.findById(id);
         Ingredient ingredient = Ingredient.findByIdAndRecipeId(id2, id);
@@ -173,14 +184,14 @@ public class RecipeController extends BaseController {
             res = saveModelResult(request,this,recipe,0,true);
         }
         if (res == null)
-            res = contentNegotiationError(request,noResults,404);
+            res = contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result getIngredient(Http.Request request, Long id){
-        clearModelList();
+        initRequest(request);
 
         List<Ingredient> ingredients = Ingredient.findByRecipeId(id);
         Result res = this.getModel(request,new IngredientController(),ingredients);
@@ -190,7 +201,7 @@ public class RecipeController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result getIngredientId(Http.Request request, Long id, Long id2){
-        clearModelList();
+        initRequest(request);
 
         Ingredient ingredient = Ingredient.findByIdAndRecipeId(id2, id);
         Result res = this.getModelId(request,new IngredientController(),ingredient);

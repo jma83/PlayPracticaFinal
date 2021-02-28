@@ -7,20 +7,31 @@ import models.Ingredient;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import play.data.Form;
+import play.i18n.MessagesApi;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Security;
 import play.twirl.api.Content;
+import utils.MessageUtils;
+
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 
 public class IngredientController extends BaseController {
 
     String headerCount = "X-Ingredient-Count";
+    public IngredientController() {
+        super();
+    }
+    @Inject
+    public IngredientController(MessagesApi messagesApi){
+        super(messagesApi);
+    }
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result createIngredient(Http.Request request){
-        clearModelList();
+        initRequest(request);
         Form<Ingredient> form = formFactory.form(Ingredient.class);
         form = validateRequestForm(request,form);
         Result res = checkFormErrors(request,form);
@@ -37,7 +48,7 @@ public class IngredientController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result getIngredient(Http.Request request){
-        clearModelList();
+        initRequest(request);
 
         Result res = this.getModel(request,this, Ingredient.findAll());
 
@@ -47,7 +58,7 @@ public class IngredientController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result getIngredientId(Http.Request request, Long id){
-        clearModelList();
+        initRequest(request);
 
         Ingredient i = Ingredient.findById(id);
         Result res = getModelId(request,this, i);
@@ -57,7 +68,7 @@ public class IngredientController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result updateIngredient(Http.Request request, Long id){
-        clearModelList();
+        initRequest(request);
         Form<Ingredient> form = formFactory.form(Ingredient.class);
         form = validateRequestForm(request,form);
         Result res = checkFormErrors(request,form);
@@ -70,17 +81,16 @@ public class IngredientController extends BaseController {
                 int count = Ingredient.findByName(ingredientUpdate.getName()).size();
                 res = saveModelResult(request,this,ingredientUpdate, count,true);
             }
+            if (res == null)
+                res = contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
         }
-
-        if (res == null)
-            res = contentNegotiationError(request,noResults,404);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     @Security.Authenticated(UserAuthenticator.class)
     public Result deleteIngredient(Http.Request request, Long id){
-        clearModelList();
+        initRequest(request);
         Ingredient ingrFinal = Ingredient.findById(id);
 
         Result res = this.deleteModelResult(request,this,ingrFinal);

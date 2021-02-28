@@ -5,6 +5,7 @@ import io.ebean.Finder;
 import play.data.validation.Constraints.*;
 import validators.Description;
 import validators.Name;
+import validators.Price;
 
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
@@ -51,7 +52,6 @@ public class Ingredient extends BaseModel {
             }
         }
         return ingredientList;
-
     }
 
 
@@ -61,6 +61,7 @@ public class Ingredient extends BaseModel {
     @Required
     @Description
     String description;
+    @Price
     Float price;
     String coin;
 

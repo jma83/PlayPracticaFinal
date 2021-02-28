@@ -1,5 +1,6 @@
 package models;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import io.ebean.Model;
 import io.ebean.annotation.CreatedTimestamp;
 import com.fasterxml.jackson.annotation.JsonIgnore;
