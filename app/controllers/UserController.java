@@ -1,8 +1,8 @@
 package controllers;
 
-import auth.Attrs;
-import auth.PassArgAction;
-import auth.UserAuthenticator;
+import actionCompostionAuth.Attrs;
+import actionCompostionAuth.UserArg;
+import actionCompostionAuth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
 import models.BaseModel;
 import models.User;
@@ -50,7 +50,7 @@ public class UserController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    @With(PassArgAction.class)
+    @UserArg
     public Result getUserId(Http.Request request, String id){   //OK
         clearModelList();
 
@@ -62,7 +62,7 @@ public class UserController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    @With(PassArgAction.class)
+    @UserArg
     public Result updateUser(Http.Request request, String id){  //Ok
         clearModelList();
         Form<User> form = formFactory.form(User.class);
@@ -85,13 +85,15 @@ public class UserController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    @With(PassArgAction.class)
+    @UserArg
     public Result deleteUser(Http.Request request, String id){  //Ok
         clearModelList();
         User userRequest = request.attrs().get(Attrs.USER);
-        User usuFinal = User.findById(checkUserId(userRequest,id,0));
+        User usuFinal = User.findById(checkSelfId(userRequest,id,0));
+        Result res = null;
+        if (usuFinal!=null) res = deleteModelResult(request,this,usuFinal);
 
-        Result res = deleteModelResult(request,this,usuFinal);
+        if (res == null) res = contentNegotiationError(request,this.forbiddenError,403);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }

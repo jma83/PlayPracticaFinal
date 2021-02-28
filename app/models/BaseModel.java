@@ -5,6 +5,7 @@ import io.ebean.annotation.CreatedTimestamp;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.annotation.UpdatedTimestamp;
 import play.data.format.Formats.DateTime;
+import utils.DateUtils;
 
 import javax.persistence.Column;
 import javax.persistence.Id;
@@ -20,11 +21,11 @@ public class BaseModel extends Model {
     @Version
     @Column(updatable=false)
     Long version;
-    @DateTime(pattern="yyyy-MM-dd HH:mm:ss")
+    @DateTime(pattern=DateUtils.DATETIME_FORMAT)
     @CreatedTimestamp
     @Column(updatable=false)
     Date whenCreated;
-    @DateTime(pattern="yyyy-MM-dd HH:mm:ss")
+    @DateTime(pattern=DateUtils.DATETIME_FORMAT)
     @UpdatedTimestamp
     @Column(updatable=false)
     Date whenUpdated;

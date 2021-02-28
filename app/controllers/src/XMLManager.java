@@ -1,4 +1,4 @@
-package utils;
+package controllers.src;
 
 import models.BaseModel;
 import models.Ingredient;

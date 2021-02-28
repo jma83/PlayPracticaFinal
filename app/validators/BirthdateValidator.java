@@ -2,6 +2,7 @@ package validators;
 
 import play.data.validation.Constraints;
 import play.libs.F;
+import utils.DateUtils;
 
 import javax.validation.ConstraintValidator;
 import java.text.SimpleDateFormat;
@@ -24,7 +25,6 @@ public class BirthdateValidator extends Constraints.Validator<Date> implements C
     public boolean isValid(Date object, javax.validation.ConstraintValidatorContext constraintContext) {
 
         if (object==null || "".equals(object)) {
-            //System.err.println("Birthdate can't be empty or null");
             System.err.println(object);
             constraintContext.disableDefaultConstraintViolation();
             constraintContext.buildConstraintViolationWithTemplate("Birthdate can't be empty or null").addConstraintViolation();
@@ -32,25 +32,20 @@ public class BirthdateValidator extends Constraints.Validator<Date> implements C
         }
 
         if (object.toString().length() < 10) {
-            //System.err.println("Birthdate must follow the format: yyyy-MM-dd");
             constraintContext.disableDefaultConstraintViolation();
             constraintContext.buildConstraintViolationWithTemplate("Birthdate must follow the format: yyyy-MM-dd").addConstraintViolation();
             return false;
         }
         Date d2 = new Date();
-        Calendar a = getCalendar(object);
-        Calendar b = getCalendar(d2);
-        int diff = b.get(Calendar.YEAR) - a.get(Calendar.YEAR);
+        int diff = DateUtils.yearsBetweenDates(object, d2);
 
         if (diff < 0){
-            //System.err.println("Birthdate can't be greater than the current one");
             constraintContext.disableDefaultConstraintViolation();
             constraintContext.buildConstraintViolationWithTemplate("Birthdate can't be greater than the current one").addConstraintViolation();
             return false;
         }
 
-        if (diff < 18){
-            //System.err.println("Birthdate must be greater or equal to 18 years");
+        if (diff < 16){
             constraintContext.disableDefaultConstraintViolation();
             constraintContext.buildConstraintViolationWithTemplate("Birthdate must be greater than 16 years").addConstraintViolation();
             return false;
@@ -58,12 +53,7 @@ public class BirthdateValidator extends Constraints.Validator<Date> implements C
 
         return true;
     }
-    //https://stackoverflow.com/questions/7906301/how-can-i-find-the-number-of-years-between-two-dates
-    public static Calendar getCalendar(Date date) {
-        Calendar cal = Calendar.getInstance(Locale.UK);
-        cal.setTime(date);
-        return cal;
-    }
+
 
     @Override
     public F.Tuple<String, Object[]> getErrorMessageKey() {

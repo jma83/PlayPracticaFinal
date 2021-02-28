@@ -8,18 +8,12 @@ create table ingredient (
   title_xml                     varchar(255),
   name                          varchar(255),
   description                   varchar(255),
-  quantity                      float,
-  measure                       varchar(255),
+  price                         float,
+  coin                          varchar(255),
   version                       bigint not null,
   when_created                  timestamp not null,
   when_updated                  timestamp not null,
   constraint pk_ingredient primary key (id)
-);
-
-create table ingredient_tag (
-  ingredient_id                 bigint not null,
-  tag_id                        bigint not null,
-  constraint pk_ingredient_tag primary key (ingredient_id,tag_id)
 );
 
 create table recipe (
@@ -27,7 +21,7 @@ create table recipe (
   title_xml                     varchar(255),
   name                          varchar(255),
   description                   varchar(255),
-  visibility                    boolean,
+  vegan                         boolean,
   author_id                     bigint,
   version                       bigint not null,
   when_created                  timestamp not null,
@@ -104,12 +98,6 @@ create table user_token (
   constraint pk_user_token primary key (id)
 );
 
-create index ix_ingredient_tag_ingredient on ingredient_tag (ingredient_id);
-alter table ingredient_tag add constraint fk_ingredient_tag_ingredient foreign key (ingredient_id) references ingredient (id) on delete restrict on update restrict;
-
-create index ix_ingredient_tag_tag on ingredient_tag (tag_id);
-alter table ingredient_tag add constraint fk_ingredient_tag_tag foreign key (tag_id) references tag (id) on delete restrict on update restrict;
-
 create index ix_recipe_author_id on recipe (author_id);
 alter table recipe add constraint fk_recipe_author_id foreign key (author_id) references user (id) on delete restrict on update restrict;
 
@@ -138,12 +126,6 @@ alter table user add constraint fk_user_user_token_id foreign key (user_token_id
 
 # --- !Downs
 
-alter table ingredient_tag drop constraint if exists fk_ingredient_tag_ingredient;
-drop index if exists ix_ingredient_tag_ingredient;
-
-alter table ingredient_tag drop constraint if exists fk_ingredient_tag_tag;
-drop index if exists ix_ingredient_tag_tag;
-
 alter table recipe drop constraint if exists fk_recipe_author_id;
 drop index if exists ix_recipe_author_id;
 
@@ -170,8 +152,6 @@ alter table user drop constraint if exists fk_user_recipe_book_id;
 alter table user drop constraint if exists fk_user_user_token_id;
 
 drop table if exists ingredient;
-
-drop table if exists ingredient_tag;
 
 drop table if exists recipe;
 

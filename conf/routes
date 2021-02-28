@@ -2,45 +2,42 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+#User
 POST /user controllers.UserController.createUser(request: Request)
 GET /user controllers.UserController.getUser(request: Request)
 GET /user/:id controllers.UserController.getUserId(request: Request, id: String)
 PUT /user/:id controllers.UserController.updateUser(request: Request, id: String)
 DELETE /user/:id controllers.UserController.deleteUser(request: Request, id: String)
 
+#Recipe
 POST /recipe controllers.RecipeController.createRecipe(request: Request)
 POST /recipe/:id/ingredientList controllers.RecipeController.addIngredient(request: Request, id: Long)
 POST /recipe/:id/ingredientList/:id2 controllers.RecipeController.addIngredientById(request: Request, id: Long, id2: Long)
-
-
 GET /recipe controllers.RecipeController.getRecipe(request: Request)
 GET /recipe/:id controllers.RecipeController.getRecipeId(request: Request, id: Long)
 GET /recipe/:id/ingredientList controllers.RecipeController.getIngredient(request: Request, id: Long)
 GET /recipe/:id/ingredientList/:id2 controllers.RecipeController.getIngredientId(request: Request, id: Long, id2: Long)
-
 PUT /recipe/:id controllers.RecipeController.updateRecipe(request: Request, id: Long)
 DELETE /recipe/:id controllers.RecipeController.deleteRecipe(request: Request, id: Long)
 DELETE /recipe/:id/ingredientList/:id2 controllers.RecipeController.removeIngredient(request: Request, id: Long, id2: Long)
 
-
+#Ingredient
 POST /ingredient controllers.IngredientController.createIngredient(request: Request)
 GET /ingredient controllers.IngredientController.getIngredient(request: Request)
 GET /ingredient/:id controllers.IngredientController.getIngredientId(request: Request, id: Long)
 PUT /ingredient/:id controllers.IngredientController.updateIngredient(request: Request, id: Long)
 DELETE /ingredient/:id controllers.IngredientController.deleteIngredient(request: Request, id: Long)
 
+#RecipeBook
 POST /recipeBook/:id/recipeList controllers.RecipeBookController.addRecipe(request: Request, id: String)
 POST /recipeBook/:id/recipeList/:id2 controllers.RecipeBookController.addRecipeById(request: Request, id: String, id2: Long)
-
 GET /recipeBook controllers.RecipeBookController.getRecipeBook(request: Request)
 GET /recipeBook/:id controllers.RecipeBookController.getRecipeBookId(request: Request, id: String)
-GET /recipeBook/:id/recipeList controllers.RecipeBookController.getRecipes(request: Request, id: String)
-GET /recipeBook/:id/recipeList/:id2 controllers.RecipeBookController.getRecipe(request: Request, id: String, id2: Long)
-
-PUT /recipeBook/:id controllers.RecipeBookController.updateRecipeBook(request: Request, id: String)
-
+GET /recipeBook/:id/recipeList controllers.RecipeBookController.getRecipe(request: Request, id: String)
+GET /recipeBook/:id/recipeList/:id2 controllers.RecipeBookController.getRecipeId(request: Request, id: String, id2: Long)
+PUT /recipeBook/:id controllers.RecipeBookController.updateRecipeBookProps(request: Request, id: String)
 DELETE /recipeBook/:id controllers.RecipeBookController.resetRecipeBook(request: Request, id: String)
-DELETE /recipe/:id/recipeList/:id2 controllers.RecipeBookController.removeRecipe(request: Request, id: String, id2: Long)
+DELETE /recipeBook/:id/recipeList/:id2 controllers.RecipeBookController.removeRecipe(request: Request, id: String, id2: Long)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(file)

@@ -1,4 +1,4 @@
-package validators;
+package utils;
 
 public class StringUtils {
     //https://mkyong.com/regular-expressions/java-regex-check-alphanumeric-string/
@@ -13,22 +13,22 @@ public class StringUtils {
     }
 
     //http://www.techdive.in/java/java-password-validation
-    public static boolean checkPasswordFormat(final String password)
+    public static boolean usernameFormat(final String username)
     {
         boolean valid = true;
 
         String upperCaseChars = "(.*[A-Z].*)";
-        if (!password.matches(upperCaseChars ))
+        if (!username.matches(upperCaseChars ))
         {
             valid = false;
         }
         String lowerCaseChars = "(.*[a-z].*)";
-        if (!password.matches(lowerCaseChars ))
+        if (!username.matches(lowerCaseChars ))
         {
             valid = false;
         }
         String numbers = "(.*[0-9].*)";
-        if (!password.matches( numbers ))
+        if (!username.matches( numbers ))
         {
             valid = false;
         }

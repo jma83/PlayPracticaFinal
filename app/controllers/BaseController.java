@@ -15,7 +15,7 @@ import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
 import play.twirl.api.Content;
-import utils.XMLManager;
+import controllers.src.XMLManager;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ public class BaseController extends Controller {
     List<BaseModel> modelList = new ArrayList<>();
     String noResults = "No results!";
     final String formatError = "Error, incorrect format";
-    final String forbbidenError = "Error, you don't have permission to modify this element";
+    final String forbiddenError = "Error, you don't have permission to modify this element";
     final String duplicatedError = "Error, Duplicated register";
     final String deleteIngredientError = "Error, Can't delete this Ingredient, is being used in one or more Recipes";
     final String deleteOk = "The model has been deleted successfully";
@@ -68,8 +68,8 @@ public class BaseController extends Controller {
     }
 
     public Result contentNegotiationError(Http.Request request, String errorMsg, Integer status){
-        Result res = null;
-        Boolean b = false;
+        Result res;
+        boolean b = false;
         if (status == 404) b=true;
 
         if (request.accepts("application/xml")){
@@ -87,7 +87,7 @@ public class BaseController extends Controller {
 
     public Result checkFormErrors(Http.Request request,Form<? extends BaseModel> form){
         if (form==null)
-            return contentNegotiationError(request,noResults,400);
+            return contentNegotiationError(request,noResults,404);
 
         if (form.hasErrors()){
             System.err.println(form.errorsAsJson());
@@ -188,7 +188,7 @@ public class BaseController extends Controller {
                 return true;
             }
         }catch (Exception e){
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
         }
         return false;
     }
@@ -201,7 +201,7 @@ public class BaseController extends Controller {
         try {
             res = Long.valueOf(id);
         }catch (NumberFormatException e){
-            System.out.println("Error: " + e.getMessage());
+            System.err.println("Error: " + e.getMessage());
         }
 
         return res;
@@ -229,9 +229,8 @@ public class BaseController extends Controller {
         ObjectNode objectNode = Json.newObject();
         objectNode.put("success", success);
         objectNode.put("message", errorMsg);
-        Result res = Results.status(status,objectNode);
+        return Results.status(status,objectNode);
 
-        return res;
     }
 
     public Content getContentXML(List<BaseModel> modelList){

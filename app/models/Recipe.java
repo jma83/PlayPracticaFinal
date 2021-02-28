@@ -11,7 +11,8 @@ import io.ebean.ExpressionList;
 import io.ebean.Finder;
 import org.checkerframework.common.value.qual.BoolVal;
 import play.data.validation.Constraints.*;
-import utils.RecipeSearch;
+import controllers.src.RecipeSearch;
+import utils.DateUtils;
 import validators.Description;
 import validators.Name;
 
@@ -33,11 +34,8 @@ public class Recipe extends BaseModel {
     public static Recipe findById(long id){
         return find.byId(id);
     }
-    public static List<Recipe> findByIngredient(Ingredient i, Long idRecipe){
-        return find.query().where().in("ingredientList", i).eq("id",idRecipe).findList();
-    }
-    public static Recipe findByIngredientId(Long id, Long idRecipe){
-        return find.query().where().in("ingredientList.id", id).eq("id",idRecipe).findOne();
+    public static Recipe findByIdAndUser(Long id,User u){
+        return find.query().where().in("author", u).eq("id",id).findOne();
     }
     public static List<Recipe> findByNameAndUser(String name, User u, Long id){
         return find.query().where().eq("name", name).in("author", u).ne("id",id).findList();
@@ -46,7 +44,7 @@ public class Recipe extends BaseModel {
         return find.query().where().eq("recipeBookList.id", id).findList();
     }
     public static Recipe findByIdAndRecipeBookId(Long id, Long id2){
-        return find.query().where().eq("id", id).eq("recipeBookList.id", id2).findOne();
+        return find.query().where().eq("id", id).in("recipeBookList.id", id2).findOne();
     }
 
 
@@ -73,8 +71,6 @@ public class Recipe extends BaseModel {
             recipeQuery = recipeQuery.in("ingredientList.id", recipeSearch.getIngredientIdLong());
         if (recipeSearch.getIngredientName()!=null)
             recipeQuery = recipeQuery.in("ingredientList.name", recipeSearch.getIngredientName());
-        if (recipeSearch.getIngredientTag()!=null)
-            recipeQuery = recipeQuery.in("ingredientList.tagList.tagName", recipeSearch.getIngredientTag());
         if (recipeSearch.getAuthorId()!=null)
             recipeQuery = recipeQuery.in("author.id", recipeSearch.getAuthorIdLong());
         if (recipeSearch.getAuthorName()!=null)
@@ -89,8 +85,8 @@ public class Recipe extends BaseModel {
     @Required
     @Description
     String description;
-    @BoolVal({true, false})
-    Boolean visibility = true;
+    @BoolVal({false, true})
+    Boolean vegan = false;
     @ManyToMany(cascade = CascadeType.ALL)
     @Valid
     List<Tag> tagList = new ArrayList<>();
@@ -109,12 +105,12 @@ public class Recipe extends BaseModel {
         setTitleXML("recipe");
     }
 
-    public Recipe (String name, String description, Boolean visibility, List<Tag> tagList,
+    public Recipe (String name, String description, Boolean vegan, List<Tag> tagList,
                    List<Ingredient> ingredientList,User author){
         super();
         this.name = name;
         this.description = description;
-        this.visibility = visibility;
+        this.vegan = vegan;
         this.tagList = tagList;
         this.ingredientList = ingredientList;
         this.author = author;
@@ -123,19 +119,15 @@ public class Recipe extends BaseModel {
     public void update(Recipe recipe){
         this.name = recipe.getName();
         this.description = recipe.getDescription();
-        this.visibility = recipe.getVisibility();
+        this.vegan = recipe.getVegan();
         this.tagList = recipe.getTagList();
         this.ingredientList = recipe.getIngredientList();
-        if (recipe.getAuthor()!=null)
-            this.author = recipe.getAuthor();
-        else
-            this.author = this.getAuthor();
+        this.author = this.getAuthor();
     }
 
     public static Date toDate(String date){
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat dateFormat = new SimpleDateFormat(DateUtils.DATE_FORMAT);
         try {
-
             Date ts = dateFormat.parse(date);
             return ts;
         } catch (ParseException e) {
@@ -168,12 +160,12 @@ public class Recipe extends BaseModel {
         this.description = description;
     }
 
-    public Boolean getVisibility() {
-        return visibility;
+    public Boolean getVegan() {
+        return vegan;
     }
 
-    public void setVisibility(Boolean publicRecipe) {
-        this.visibility = publicRecipe;
+    public void setVegan(Boolean vegan) {
+        this.vegan = vegan;
     }
 
     public List<Tag> getTagList() {

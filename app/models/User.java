@@ -3,11 +3,11 @@ package models;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import play.data.format.Formats;
 import play.data.validation.Constraints.*;
 
 import io.ebean.Finder;
+import utils.DateUtils;
 import validators.Birthdate;
 import validators.Username;
 
@@ -18,7 +18,6 @@ import javax.persistence.OneToOne;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 
 @Entity
@@ -33,7 +32,7 @@ public class User extends BaseModel {
     String email;
 
     @Birthdate
-    @Formats.DateTime(pattern = "yyyy-MM-dd")
+    @Formats.DateTime(pattern = DateUtils.DATE_FORMAT)
     Date birthdate;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
@@ -89,14 +88,8 @@ public class User extends BaseModel {
     }
 
     public void setAge() {
-        //https://www.baeldung.com/java-date-difference
-        if (this.birthdate != null) {
-            Date date2 = new Date();
-            long diffInMillies = Math.abs(this.birthdate.getTime() - date2.getTime());
-            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-            this.age = Math.toIntExact(diff / 365);
-        }
-
+        if (this.birthdate != null)
+            this.age = DateUtils.yearsBetweenDates(this.birthdate,new Date());
     }
 
     public void setUserToken(){

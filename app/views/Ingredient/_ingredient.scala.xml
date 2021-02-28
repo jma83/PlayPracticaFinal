@@ -4,12 +4,6 @@
     <id>@ingredient.getId()</id>
     <name>@ingredient.getName()</name>
     <description>@ingredient.getDescription()</description>
-    <quantity>@ingredient.getQuantity()</quantity>
-    <measure>@ingredient.getMeasure()</measure>
-    @if(ingredient != null && ingredient.getTagList()!=null){
-    @views.xml.Tag.tags(ingredient.getTagList())
-    }
-    @if(false){
-    <vegans/>
-    }
+    <price>@ingredient.getPrice()</price>
+    <coin>@ingredient.getCoin()</coin>
 </ingredient>

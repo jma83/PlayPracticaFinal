@@ -1,6 +1,5 @@
 package models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.Finder;
 import play.data.validation.Constraints.*;
 import validators.Description;
@@ -23,10 +22,6 @@ public class RecipeBook extends BaseModel{
     public static RecipeBook findByRecipe(long id, Recipe recipe){
         return find.query().where().eq("id",id).in("recipeList",recipe).findOne();
     }
-    public static List<RecipeBook> findByRecipeName(long id, String recipe){
-        return find.query().where().eq("id",id).eq("recipeList.name",recipe).findList();
-    }
-
 
     @Required
     @Name
@@ -88,16 +83,11 @@ public class RecipeBook extends BaseModel{
         this.name = rb.getName();
         if (rb.getReview() != null)
         this.review = rb.getReview();
-        if (rb.getAuthor() != null)
-        this.author = rb.getAuthor();
-        if (rb.getRecipeList() != null)
-        this.recipeList = rb.getRecipeList();
     }
 
     public void reset(){
         this.name = "";
         this.review = "";
-        this.author = null;
         this.recipeList = new ArrayList<>();
     }
 }

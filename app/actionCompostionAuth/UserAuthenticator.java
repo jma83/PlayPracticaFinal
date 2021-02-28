@@ -1,25 +1,15 @@
-package auth;
+package actionCompostionAuth;
 
-import akka.http.javadsl.model.headers.Authorization;
-import akka.http.javadsl.model.headers.HttpCredentials;
-import akka.http.javadsl.model.headers.OAuth2BearerToken;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import controllers.routes;
-import io.ebean.ExpressionList;
-import io.ebeaninternal.server.lib.util.Str;
-import models.User;
 import models.UserToken;
 import play.libs.Json;
-import play.libs.typedmap.TypedKey;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
 import play.mvc.Security.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletionStage;
 
 public class UserAuthenticator extends Authenticator {
     private static final String AUTH = "Auth";

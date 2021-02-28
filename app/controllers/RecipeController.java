@@ -1,8 +1,8 @@
 package controllers;
 
-import auth.Attrs;
-import auth.PassArgAction;
-import auth.UserAuthenticator;
+import actionCompostionAuth.Attrs;
+import actionCompostionAuth.UserArg;
+import actionCompostionAuth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
 import models.*;
 import org.w3c.dom.Document;
@@ -11,10 +11,8 @@ import play.data.Form;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Security;
-import play.mvc.With;
 import play.twirl.api.Content;
-import utils.RecipeSearch;
-
+import controllers.src.RecipeSearch;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +25,7 @@ public class RecipeController extends BaseController {
     Boolean checkFilter = false;
 
     @Security.Authenticated(UserAuthenticator.class)
-    @With(PassArgAction.class)
+    @UserArg
     public Result createRecipe(Http.Request request){   //Ok
         clearModelList();
         Form<Recipe> form = formFactory.form(Recipe.class);
@@ -39,6 +37,7 @@ public class RecipeController extends BaseController {
             User user = request.attrs().get(Attrs.USER);
             r.setAuthor(user);
             r.setIngredientList(Ingredient.findAndMergeIngredientList(r.getIngredientList()));
+            r.setTagList(Tag.findAndMergeTagList(r.getTagList()));
             int count = Recipe.findByNameAndUser(r.getName(),user,r.getId()).size();
             res = saveModelResult(request,this,r,count,false);
         }
@@ -47,7 +46,7 @@ public class RecipeController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    @With(PassArgAction.class)
+    @UserArg
     public Result getRecipe(Http.Request request){  //OK
         clearModelList();
         User user = request.attrs().get(Attrs.USER);
@@ -86,6 +85,7 @@ public class RecipeController extends BaseController {
             if (recipeUpdate != null && recipeRequest != null) {
                 recipeUpdate.update(recipeRequest);
                 recipeUpdate.setIngredientList(Ingredient.findAndMergeIngredientList(recipeUpdate.getIngredientList()));
+                recipeUpdate.setTagList(Tag.findAndMergeTagList(recipeUpdate.getTagList()));
                 int count = Recipe.findByNameAndUser(recipeUpdate.getName(),recipeUpdate.getAuthor(),recipeUpdate.getId()).size();
                 res = saveModelResult(request,this,recipeUpdate, count,true);
             }
@@ -97,10 +97,16 @@ public class RecipeController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
+    @UserArg
     public Result deleteRecipe(Http.Request request, Long id){
         clearModelList();
         Recipe recFinal = Recipe.findById(id);
-        Result res = deleteModelResult(request,this,recFinal);
+        User userRequest = request.attrs().get(Attrs.USER);
+        Result res = null;
+        if(userRequest == recFinal.getAuthor())
+            res = deleteModelResult(request,this,recFinal);
+
+        if (res == null) res = contentNegotiationError(request,this.forbiddenError,403);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -139,11 +145,15 @@ public class RecipeController extends BaseController {
         clearModelList();
         Result res = null;
         Recipe recipe = Recipe.findById(id);
-        Ingredient ingredient = Ingredient.findByIdAndRecipeId(id2, id);
+        Ingredient ingredient = Ingredient.findById(id2);
 
         if (recipe != null && ingredient != null) {
             recipe.ingredientList.add(ingredient);
-            res = saveModelResult(request,this,recipe,0,true);
+            int count = 0;
+            if (Ingredient.findByIdAndRecipeId(id2,recipe.getId())!=null)
+                count = 1;
+
+            res = saveModelResult(request,this,recipe,count,true);
         }
         if (res == null)
             res = contentNegotiationError(request,noResults,404);

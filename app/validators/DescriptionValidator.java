@@ -2,6 +2,7 @@ package validators;
 
 import play.data.validation.Constraints;
 import play.libs.F;
+import utils.StringUtils;
 
 import javax.validation.ConstraintValidator;
 

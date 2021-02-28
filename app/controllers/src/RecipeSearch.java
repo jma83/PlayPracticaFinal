@@ -1,4 +1,4 @@
-package utils;
+package controllers.src;
 
 import play.mvc.Http;
 import java.lang.reflect.Field;
@@ -13,7 +13,6 @@ public class RecipeSearch {
     Optional<String> dateGreater;
     Optional<String> recipeTag;
     Optional<String> ingredientId;
-    Optional<String> ingredientTag;
     Optional<String> ingredientName;
     Optional<String> authorId;
     Optional<String> authorName;
@@ -30,7 +29,6 @@ public class RecipeSearch {
         recipeTag = request.queryString("tag");
         ingredientId = request.queryString("ingredientId");
         ingredientName = request.queryString("ingredientName");
-        ingredientTag = request.queryString("ingredientTag");
         authorName = request.queryString("authorName");
         authorId = request.queryString("authorId");
     }
@@ -61,10 +59,7 @@ public class RecipeSearch {
     }
 
     public String getName() {
-        if (name.isPresent()){
-            return name.get();
-        }
-        return null;
+        return name.orElse(null);
     }
 
     public void setName(Optional<String> name) {
@@ -72,10 +67,7 @@ public class RecipeSearch {
     }
 
     public String getDescription() {
-        if (description.isPresent()){
-            return description.get();
-        }
-        return null;
+        return description.orElse(null);
     }
 
     public void setDescription(Optional<String> description) {
@@ -83,43 +75,19 @@ public class RecipeSearch {
     }
 
     public String getDateLower() {
-        if (dateLower.isPresent()){
-            return dateLower.get();
-        }
-        return null;
-    }
-
-    public void setDateLower(Optional<String> dateLower) {
-        this.dateLower = dateLower;
+        return dateLower.orElse(null);
     }
 
     public String getDateGreater() {
-        if (dateGreater.isPresent()){
-            return dateGreater.get();
-        }
-        return null;
-    }
-
-    public void setDateGreater(Optional<String> dateGreater) {
-        this.dateGreater = dateGreater;
+        return dateGreater.orElse(null);
     }
 
     public String getRecipeTag() {
-        if (recipeTag.isPresent()){
-            return recipeTag.get();
-        }
-        return null;
-    }
-
-    public void setRecipeTag(Optional<String> recipeTag) {
-        this.recipeTag = recipeTag;
+        return recipeTag.orElse(null);
     }
 
     public String getIngredientId() {
-        if (ingredientId.isPresent()){
-            return ingredientId.get();
-        }
-        return null;
+        return ingredientId.orElse(null);
     }
 
     public Long getIngredientIdLong() {
@@ -127,37 +95,12 @@ public class RecipeSearch {
         return convertToLong(res);
     }
 
-    public void setIngredientId(Optional<String> ingredientId) {
-        this.ingredientId = ingredientId;
-    }
-
-    public String getIngredientTag() {
-        if (ingredientTag.isPresent()){
-            return ingredientTag.get();
-        }
-        return null;
-    }
-
-    public void setIngredientTag(Optional<String> ingredientTag) {
-        this.ingredientTag = ingredientTag;
-    }
-
     public String getIngredientName() {
-        if (ingredientName.isPresent()){
-            return ingredientName.get();
-        }
-        return null;
-    }
-
-    public void setIngredientName(Optional<String> ingredientName) {
-        this.ingredientName = ingredientName;
+        return ingredientName.orElse(null);
     }
 
     public String getAuthorId() {
-        if (authorId.isPresent()){
-            return authorId.get();
-        }
-        return null;
+        return authorId.orElse(null);
     }
 
     public Long getAuthorIdLong() {
@@ -170,14 +113,7 @@ public class RecipeSearch {
     }
 
     public String getAuthorName() {
-        if (authorName.isPresent()){
-            return authorName.get();
-        }
-        return null;
-    }
-
-    public void setAuthorName(Optional<String> authorName) {
-        this.authorName = authorName;
+        return authorName.orElse(null);
     }
 
     public Long convertToLong(String res){

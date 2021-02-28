@@ -1,20 +1,16 @@
 package controllers;
 
-import auth.Attrs;
-import auth.PassArgAction;
-import auth.UserAuthenticator;
+import actionCompostionAuth.Attrs;
+import actionCompostionAuth.UserArg;
+import actionCompostionAuth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
-import models.BaseModel;
-import models.Recipe;
-import models.RecipeBook;
-import models.User;
+import models.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import play.data.Form;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Security;
-import play.mvc.With;
 import play.twirl.api.Content;
 import java.util.Arrays;
 import java.util.List;
@@ -31,10 +27,10 @@ public class RecipeBookController extends BaseController {
         Result res = this.getModel(request,this, RecipeBook.findAll());
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
-
     }
-    @With(PassArgAction.class)
+
     @Security.Authenticated(UserAuthenticator.class)
+    @UserArg
     public Result getRecipeBookId(Http.Request request, String id){
         clearModelList();
 
@@ -46,9 +42,9 @@ public class RecipeBookController extends BaseController {
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
-    @With(PassArgAction.class)
     @Security.Authenticated(UserAuthenticator.class)
-    public Result updateRecipeBook(Http.Request request, String id){
+    @UserArg
+    public Result updateRecipeBookProps(Http.Request request, String id){
         clearModelList();
         Form<RecipeBook> form = formFactory.form(RecipeBook.class);
         form = validateRequestForm(request,form);
@@ -63,14 +59,14 @@ public class RecipeBookController extends BaseController {
                 res = saveModelResult(request,this,recipeBookUpdate,0,true);
             }
             if (res == null)
-                res = contentNegotiationError(request,forbbidenError,403);
+                res = contentNegotiationError(request,forbiddenError,403);
         }
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
-    @With(PassArgAction.class)
     @Security.Authenticated(UserAuthenticator.class)
+    @UserArg
     public Result resetRecipeBook(Http.Request request, String id){
         clearModelList();
         Result res = null;
@@ -82,7 +78,7 @@ public class RecipeBookController extends BaseController {
         }
 
         if (res == null)
-            res = contentNegotiationError(request,forbbidenError,403);
+            res = contentNegotiationError(request,forbiddenError,403);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -90,7 +86,7 @@ public class RecipeBookController extends BaseController {
     //Recipe management:
 
     @Security.Authenticated(UserAuthenticator.class)
-    @With(PassArgAction.class)
+    @UserArg
     public Result addRecipeById(Http.Request request, String id, Long id2){
         clearModelList();
         Result res = null;
@@ -109,14 +105,14 @@ public class RecipeBookController extends BaseController {
         }
 
         if (res == null)
-            res = contentNegotiationError(request,forbbidenError,403);
+            res = contentNegotiationError(request,forbiddenError,403);
 
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    @With(PassArgAction.class)
+    @UserArg
     public Result addRecipe(Http.Request request, String id){
         clearModelList();
         Result res = null;
@@ -124,25 +120,32 @@ public class RecipeBookController extends BaseController {
         User user = request.attrs().get(Attrs.USER);
         if (checkSelfId(user, id,1) != -1L){
             RecipeController recipeController = new RecipeController();
-            recipeController.createRecipe(request);
-            Recipe recipe = (Recipe) modelList.get(0);
-            RecipeBook rb = user.getRecipeBook();
-            if (rb != null && recipe != null) {
-                rb.getRecipeList().add(recipe);
-                res = saveModelResult(request,this,rb,0,true);
+            Form<Recipe> form = formFactory.form(Recipe.class);
+            form = recipeController.validateRequestForm(request, form);
+            res = checkFormErrors(request, form);
+            if (res == null) {
+                Recipe recipe = form.get();
+                RecipeBook rb = user.getRecipeBook();
+                if (rb != null && recipe != null) {
+                    recipe.setIngredientList(Ingredient.findAndMergeIngredientList(recipe.getIngredientList()));
+                    recipe.setTagList(Tag.findAndMergeTagList(recipe.getTagList()));
+                    rb.getRecipeList().add(recipe);
+                    int count = 0;
+                    if (Recipe.findByIdAndRecipeBookId(recipe.getId(),rb.getId()) != null) count = 1;
+                    res = saveModelResult(request, this, rb, count, true);
+                }
             }
         }
 
         if (res == null)
-            res = contentNegotiationError(request,forbbidenError,403);
-
+            res = contentNegotiationError(request,forbiddenError,403);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    @With(PassArgAction.class)
-    public Result getRecipes(Http.Request request, String id){
+    @UserArg
+    public Result getRecipe(Http.Request request, String id){
         clearModelList();
 
         User user = request.attrs().get(Attrs.USER);
@@ -154,8 +157,8 @@ public class RecipeBookController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    @With(PassArgAction.class)
-    public Result getRecipe(Http.Request request, String id, Long id2){
+    @UserArg
+    public Result getRecipeId(Http.Request request, String id, Long id2){
         clearModelList();
 
         User user = request.attrs().get(Attrs.USER);
@@ -168,7 +171,7 @@ public class RecipeBookController extends BaseController {
 
 
     @Security.Authenticated(UserAuthenticator.class)
-    @With(PassArgAction.class)
+    @UserArg
     public Result removeRecipe(Http.Request request, String id, Long id2){
         clearModelList();
         Result res = null;
@@ -185,7 +188,7 @@ public class RecipeBookController extends BaseController {
         }
 
         if (res == null)
-            res = contentNegotiationError(request,forbbidenError,403);
+            res = contentNegotiationError(request,forbiddenError,403);
 
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));

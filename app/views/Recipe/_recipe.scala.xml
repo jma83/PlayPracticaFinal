@@ -4,11 +4,8 @@
     <id>@recipe.getId()</id>
     <name>@recipe.getName()</name>
     <description>@recipe.getDescription()</description>
-    <visibility>@recipe.getVisibility()</visibility>
+    <vegan>@recipe.getVegan()</vegan>
     @views.xml.Tag.tags(recipe.getTagList())
     @views.xml.Ingredient.ingredients(recipe.getIngredientList())
     <author>@views.xml.User._user(recipe.getAuthor())</author>
-    @if(false){
-    <vegans/>
-    }
 </recipe>

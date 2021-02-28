@@ -2,15 +2,12 @@ package models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.ebean.Finder;
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import play.data.validation.Constraints.*;
 import validators.Description;
 import validators.Name;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
-import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +34,7 @@ public class Ingredient extends BaseModel {
     public static Ingredient findByIdAndRecipeId(Long id, Long idRecipe){
         return find.query().where().eq("id", id).in("recipeList.id",idRecipe).findOne();
     }
+
     public static List<Ingredient> findAndMergeIngredientList(List<Ingredient> ingredientList){
         List<String> listNames = new ArrayList<>();
         for (Ingredient i:ingredientList) {
@@ -56,24 +54,19 @@ public class Ingredient extends BaseModel {
 
     }
 
+
     @Required
     @Name
     String name;
     @Required
     @Description
     String description;
-    Float quantity;
-    String measure;
-    @ManyToMany(cascade = CascadeType.ALL)
-    @Valid
-    List<Tag> tagList = new ArrayList<>();
+    Float price;
+    String coin;
 
     @JsonIgnore
-    @Ignore
     @ManyToMany(mappedBy = "ingredientList")
     public List<Recipe> recipeList;
-
-
 
 
     public Ingredient (){
@@ -81,13 +74,12 @@ public class Ingredient extends BaseModel {
         setTitleXML("ingredient");
     }
 
-    public Ingredient (String name, String description, Float quantity, String measure, List<Tag> tagList,List<Recipe> recipeList){
+    public Ingredient (String name, String description, Float price, String coin, List<Tag> tagList,List<Recipe> recipeList){
         super();
         this.name = name;
         this.description = description;
-        this.quantity = quantity;
-        this.measure = measure;
-        this.tagList = tagList;
+        this.price = price;
+        this.coin = coin;
         this.recipeList = recipeList;
     }
 
@@ -109,30 +101,20 @@ public class Ingredient extends BaseModel {
         this.description = description;
     }
 
-    public Float getQuantity() {
-        return quantity;
+    public Float getPrice() {
+        return price;
     }
 
-    public void setQuantity(Float quantity) {
-        this.quantity = quantity;
+    public void setPrice(Float price) {
+        this.price = price;
     }
 
-    public String getMeasure() {
-        return measure;
+    public String getCoin() {
+        return coin;
     }
 
-    public void setMeasure(String measure) {
-        this.measure = measure;
-    }
-
-    public List<Tag> getTagList() { return tagList; }
-
-    public void setTagList(List<Tag> tagList) {
-        this.tagList = tagList;
-    }
-
-    public void setTagList(ArrayList<Tag> tagList) {
-        this.tagList = tagList;
+    public void setCoin(String coin) {
+        this.coin = coin;
     }
 
     public List<Recipe> getRecipeList() {
@@ -147,11 +129,10 @@ public class Ingredient extends BaseModel {
         this.recipeList = recipeList;
     }
 
-    public void update(Ingredient ingr){
-        this.name = ingr.getName();
-        this.description = ingr.getDescription();
-        this.quantity = ingr.getQuantity();
-        this.measure = ingr.getMeasure();
-        this.tagList = ingr.getTagList();
+    public void update(Ingredient ingredient){
+        this.name = ingredient.getName();
+        this.description = ingredient.getDescription();
+        this.price = ingredient.getPrice();
+        this.coin = ingredient.getCoin();
     }
 }

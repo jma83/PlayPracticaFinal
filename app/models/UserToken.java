@@ -1,10 +1,9 @@
 package models;
 
-import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.ebean.ExpressionList;
 import io.ebean.Finder;
+import utils.DateUtils;
 
 import javax.persistence.Entity;
 import javax.persistence.OneToOne;
@@ -37,14 +36,12 @@ public class UserToken extends BaseModel{
 
     public UserToken(String username){
         //https://stackoverflow.com/questions/17141292/oauth-2-0-generating-token-and-secret-token
-        //https://www.javatpoint.com/java-get-current-date
-
+        this.titleXML="userToken";
         token = this.generateUsernameToken(username);
     }
 
     public String generateUsernameToken(String username){
-        this.titleXML="userToken";
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern(DateUtils.DATETIME_FORMAT);
         LocalDateTime now = LocalDateTime.now();
         String currentdate = dtf.format(now);
         String keySource = username + currentdate + Math.random();

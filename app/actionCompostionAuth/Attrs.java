@@ -1,4 +1,4 @@
-package auth;
+package actionCompostionAuth;
 
 import models.User;
 import play.libs.typedmap.TypedKey;

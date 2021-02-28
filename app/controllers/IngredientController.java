@@ -1,6 +1,6 @@
 package controllers;
 
-import auth.UserAuthenticator;
+import actionCompostionAuth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
 import models.BaseModel;
 import models.Ingredient;
@@ -11,7 +11,6 @@ import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Security;
 import play.twirl.api.Content;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -63,7 +62,7 @@ public class IngredientController extends BaseController {
         form = validateRequestForm(request,form);
         Result res = checkFormErrors(request,form);
 
-        if (res == null ) {
+        if (res == null) {
             Ingredient ingredientUpdate = Ingredient.findById(id);
             Ingredient ingredientRequest = form.get();
             if (ingredientUpdate != null && ingredientRequest != null) {
