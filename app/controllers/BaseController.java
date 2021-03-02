@@ -30,6 +30,9 @@ public class BaseController extends Controller {
     FormFactory formFactory;
     List<BaseModel> modelList = new ArrayList<>();
     final String langHeader = "Accept-Language";
+    final String XML_SCHEMA = "application/xml";
+    final String JSON_SCHEMA = "application/json";
+
     FilterProvider filters = new SimpleFilterProvider().addFilter("userTokenFilter", new UserTokenFilter());
     XMLManager xmlManager = new XMLManager();
     private final MessagesApi messagesApi;
@@ -44,23 +47,21 @@ public class BaseController extends Controller {
 
     public Result contentNegotiation(Http.Request request, BaseController baseController,Boolean delete){
         Result res;
-        if (request.accepts("application/xml")){
+        if (request.accepts(XML_SCHEMA)){
             Content content;
             if (modelList != null && modelList.size() > 0) {
-                content =baseController.getContentXML(modelList);
+                content = baseController.getContentXML(modelList);
             }else if (delete){
                 content = views.xml.Generic.generic.render(true,getMessage(MessageUtils.deleteOk));
             }else {
                 content = views.xml.Generic.generic.render(true,getMessage(MessageUtils.noResults));
             }
             res = Results.ok(content);
-        }else if (request.accepts("application/json")) {
+        }else if (request.accepts(JSON_SCHEMA)) {
             //https://grokonez.com/json/resolve-json-infinite-recursion-problems-working-jackson
             try {
                 if (modelList != null && modelList.size() > 0) {
-                    ObjectMapper mapper = new ObjectMapper();
-                    String result = mapper.writer(filters).writeValueAsString(modelList);
-                    res = Results.ok(Json.parse(result));
+                    res = Results.ok(Json.parse(getResultJson()));
                 }else if (delete){
                     res = genericJsonResponse(true, getMessage(MessageUtils.deleteOk), 200);
                 }else{
@@ -80,13 +81,12 @@ public class BaseController extends Controller {
 
     public Result contentNegotiationError(Http.Request request, String errorMsg, Integer status){
         Result res;
-
         boolean b = false;
 
-        if (request.accepts("application/xml")){
+        if (request.accepts(XML_SCHEMA)){
             Content content = views.xml.Generic.generic.render(b,errorMsg);
             res = Results.status(status,content);
-        }else if (request.accepts("application/json")) {
+        }else if (request.accepts(JSON_SCHEMA)) {
             res = genericJsonResponse(b, errorMsg, status);
         }else{
             res = Results.status(status,errorMsg);
@@ -112,8 +112,8 @@ public class BaseController extends Controller {
         Result res = null;
         if (list != null && list.size() > 0)
             modelList.addAll(list);
-
-        res = contentNegotiation(request,bc,false);
+        if (list != null )
+            res = contentNegotiation(request,bc,false);
 
         if (res == null)
             res = contentNegotiationError(request,getMessage(MessageUtils.formatError),400);
@@ -243,6 +243,12 @@ public class BaseController extends Controller {
     public Content getContentXML(List<BaseModel> modelList){
         return null;
     }
+
+    public String getResultJson() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writer(filters).writeValueAsString(modelList);
+    }
+
     public void initRequest(Http.Request request){
         String defaultLang = Lang.defaultLang().language();
         lang = request.header(langHeader).orElse(defaultLang);

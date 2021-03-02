@@ -28,4 +28,15 @@ public class DateUtils {
         return currentDate;
     }
 
+    public static Date toDate(String date){
+        SimpleDateFormat dateFormat = new SimpleDateFormat(DateUtils.DATE_FORMAT);
+        try {
+            Date ts = dateFormat.parse(date);
+            return ts;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }

@@ -27,7 +27,7 @@ public class UserController extends BaseController {
     public UserController(MessagesApi messagesApi){
         super(messagesApi);
     }
-    public Result createUser(Http.Request request){ //OK
+    public Result createUser(Http.Request request){
         initRequest(request);
         Form<User> form = formFactory.form(User.class);
         form = validateRequestForm(request,form);
@@ -51,7 +51,7 @@ public class UserController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result getUser(Http.Request request){    //OK
+    public Result getUser(Http.Request request){
         initRequest(request);
 
         Result res = this.getModel(request,this,User.findAll());
@@ -62,7 +62,7 @@ public class UserController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     @UserArg
-    public Result getUserId(Http.Request request, String id){   //OK
+    public Result getUserId(Http.Request request, String id){
         initRequest(request);
 
         User userRequest = request.attrs().get(Attrs.USER);
@@ -74,7 +74,7 @@ public class UserController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     @UserArg
-    public Result updateUser(Http.Request request, String id){  //Ok
+    public Result updateUser(Http.Request request, String id){
         initRequest(request);
         Form<User> form = formFactory.form(User.class);
         form = validateRequestForm(request,form);
@@ -97,7 +97,7 @@ public class UserController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     @UserArg
-    public Result deleteUser(Http.Request request, String id){  //Ok
+    public Result deleteUser(Http.Request request, String id){
         initRequest(request);
         User userRequest = request.attrs().get(Attrs.USER);
         User usuFinal = User.findById(checkSelfId(userRequest,id,0));

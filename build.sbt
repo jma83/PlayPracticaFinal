@@ -27,4 +27,6 @@ enablePlugins(PlayEbean)
 libraryDependencies += evolutions
 libraryDependencies += jdbc
 
+libraryDependencies += "mysql" % "mysql-connector-java" % "8.0.20"
 libraryDependencies += "com.h2database" % "h2" % "1.4.200"
+maintainer := "jmartinezar.inf@upsa.es"

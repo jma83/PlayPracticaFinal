@@ -52,15 +52,17 @@ public class Recipe extends BaseModel {
         Date date1 = null;
         Date date2 = null;
         if (recipeSearch.getDateGreater() != null)
-            date1 = Recipe.toDate(recipeSearch.getDateGreater());
+            date1 = DateUtils.toDate(recipeSearch.getDateGreater());
         if (recipeSearch.getDateLower() != null)
-            date2 = Recipe.toDate(recipeSearch.getDateLower());
+            date2 = DateUtils.toDate(recipeSearch.getDateLower());
 
         ExpressionList<Recipe> recipeQuery = find.query().where();
         if (recipeSearch.getName()!=null)
             recipeQuery = recipeQuery.like("name", recipeSearch.getName()+"%");
         if (recipeSearch.getDescription()!=null)
-            recipeQuery = recipeQuery.like("description", recipeSearch.getDescription()+"%")  ;
+            recipeQuery = recipeQuery.like("description", recipeSearch.getDescription()+"%");
+        if (recipeSearch.getVegan()!=null)
+            recipeQuery = recipeQuery.eq("vegan", recipeSearch.getVegan());
         if (recipeSearch.getRecipeTag()!=null)
             recipeQuery = recipeQuery.in("tagList.tagName", recipeSearch.getRecipeTag());
         if (date1!=null)
@@ -86,7 +88,7 @@ public class Recipe extends BaseModel {
     @Description
     String description;
     @BoolVal({false, true})
-    Boolean vegan = false;
+    Boolean vegan=false;
     @ManyToMany(cascade = CascadeType.ALL)
     @Valid
     List<Tag> tagList = new ArrayList<>();
@@ -117,23 +119,14 @@ public class Recipe extends BaseModel {
     }
 
     public void update(Recipe recipe){
-        this.name = recipe.getName();
-        this.description = recipe.getDescription();
-        this.vegan = recipe.getVegan();
-        this.tagList = recipe.getTagList();
-        this.ingredientList = recipe.getIngredientList();
-        this.author = this.getAuthor();
-    }
-
-    public static Date toDate(String date){
-        SimpleDateFormat dateFormat = new SimpleDateFormat(DateUtils.DATE_FORMAT);
-        try {
-            Date ts = dateFormat.parse(date);
-            return ts;
-        } catch (ParseException e) {
-            e.printStackTrace();
+        if (recipe!=null) {
+            this.name = recipe.getName();
+            this.description = recipe.getDescription();
+            this.vegan = recipe.getVegan();
+            this.tagList = recipe.getTagList();
+            this.ingredientList = recipe.getIngredientList();
+            this.author = this.getAuthor();
         }
-        return null;
     }
 
     public User getAuthor() {

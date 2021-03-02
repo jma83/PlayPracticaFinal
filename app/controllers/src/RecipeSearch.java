@@ -16,6 +16,7 @@ public class RecipeSearch {
     Optional<String> ingredientName;
     Optional<String> authorId;
     Optional<String> authorName;
+    Optional<String> vegan;
 
     public RecipeSearch(){
         super();
@@ -31,6 +32,7 @@ public class RecipeSearch {
         ingredientName = request.queryString("ingredientName");
         authorName = request.queryString("authorName");
         authorId = request.queryString("authorId");
+        vegan = request.queryString("vegan");
     }
 
     public boolean checkNotNulls(){
@@ -114,6 +116,10 @@ public class RecipeSearch {
 
     public String getAuthorName() {
         return authorName.orElse(null);
+    }
+
+    public String getVegan() {
+        return vegan.orElse(null);
     }
 
     public Long convertToLong(String res){

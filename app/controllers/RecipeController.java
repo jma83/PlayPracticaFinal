@@ -37,7 +37,7 @@ public class RecipeController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     @UserArg
-    public Result createRecipe(Http.Request request){   //Ok
+    public Result createRecipe(Http.Request request){
         initRequest(request);
         Form<Recipe> form = formFactory.form(Recipe.class);
         form = validateRequestForm(request,form);
@@ -58,7 +58,7 @@ public class RecipeController extends BaseController {
 
     @Security.Authenticated(UserAuthenticator.class)
     @UserArg
-    public Result getRecipe(Http.Request request){  //OK
+    public Result getRecipe(Http.Request request){
         initRequest(request);
         User user = request.attrs().get(Attrs.USER);
         List<Recipe> recipeList = this.filterRecipe(request,user);
@@ -74,7 +74,7 @@ public class RecipeController extends BaseController {
     }
 
     @Security.Authenticated(UserAuthenticator.class)
-    public Result getRecipeId(Http.Request request, Long id){   //OK
+    public Result getRecipeId(Http.Request request, Long id){
         initRequest(request);
 
         Recipe r = Recipe.findById(id);
@@ -114,7 +114,7 @@ public class RecipeController extends BaseController {
         Recipe recFinal = Recipe.findById(id);
         User userRequest = request.attrs().get(Attrs.USER);
         Result res = null;
-        if(userRequest == recFinal.getAuthor())
+        if(userRequest.getId().equals(recFinal.getAuthor().getId()))
             res = deleteModelResult(request,this,recFinal);
 
         if (res == null) res = contentNegotiationError(request,getMessage(MessageUtils.forbiddenError),403);

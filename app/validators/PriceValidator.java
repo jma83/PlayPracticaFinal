@@ -15,7 +15,7 @@ public class PriceValidator extends Constraints.Validator<Float> implements Cons
 
     @Override
     public boolean isValid(Float object, javax.validation.ConstraintValidatorContext constraintContext) {
-
+        if (object != null)
         if (object < 0) {
             constraintContext.disableDefaultConstraintViolation();
             constraintContext.buildConstraintViolationWithTemplate(MessageUtils.pricePositive).addConstraintViolation();
