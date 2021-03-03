@@ -11,10 +11,7 @@ import utils.DateUtils;
 import validators.Birthdate;
 import validators.Username;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -49,6 +46,7 @@ public class User extends BaseModel {
     public RecipeBook recipeBook;
 
     @OneToOne(cascade = CascadeType.ALL)
+    @Column(updatable=false)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public UserToken userToken;
 
@@ -111,12 +109,14 @@ public class User extends BaseModel {
     }
 
     public void update(User u){
-        this.setBirthdate(u.getBirthdate());
-        this.setCountry(u.getCountry());
-        this.setEmail(u.getEmail());
-        this.setLanguage(u.getLanguage());
-        this.setUsername(u.getUsername());
-        this.setAge();
+        if (u!=null) {
+            this.setBirthdate(u.getBirthdate());
+            this.setCountry(u.getCountry());
+            this.setEmail(u.getEmail());
+            this.setLanguage(u.getLanguage());
+            this.setUsername(u.getUsername());
+            this.setAge();
+        }
     }
 
     public List<Recipe> getRecipeList() {

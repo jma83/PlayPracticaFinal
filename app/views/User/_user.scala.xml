@@ -8,6 +8,8 @@
     <age>@user.getAge()</age>
     <country>@user.getCountry()</country>
     <language>@user.getLanguage()</language>
+    <whenCreated>@user.getWhenCreated()</whenCreated>
+    <whenUpdated>@user.getWhenUpdated()</whenUpdated>
     @if(user.getUserToken().getVisible() == true){
     <userToken>@user.getUserToken().getToken()</userToken>
     }

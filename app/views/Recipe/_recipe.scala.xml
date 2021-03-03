@@ -5,7 +5,10 @@
     <name>@recipe.getName()</name>
     <description>@recipe.getDescription()</description>
     <vegan>@recipe.getVegan()</vegan>
+    <whenCreated>@recipe.getWhenCreated()</whenCreated>
+    <whenUpdated>@recipe.getWhenUpdated()</whenUpdated>
     @views.xml.Tag.tags(recipe.getTagList())
     @views.xml.Ingredient.ingredients(recipe.getIngredientList())
     <author>@views.xml.User._user(recipe.getAuthor())</author>
+
 </recipe>

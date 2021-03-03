@@ -10,7 +10,9 @@ import validators.Price;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 public class Ingredient extends BaseModel {
@@ -37,20 +39,23 @@ public class Ingredient extends BaseModel {
     }
 
     public static List<Ingredient> findAndMergeIngredientList(List<Ingredient> ingredientList){
-        List<String> listNames = new ArrayList<>();
+        Set<String> listNames = new HashSet<>();
         for (Ingredient i:ingredientList) {
             listNames.add(i.getName());
         }
         List<Ingredient> ingredientList2 = find.query().where().in("name", listNames).findList();
 
         for (int i = 0; i< ingredientList.size();i++) {
-            for (int j = 0; j< ingredientList2.size();j++) {
-                if (ingredientList.get(i).getName().equals(ingredientList2.get(j).getName())){
-                    ingredientList.set(i,ingredientList2.get(j));
-                    break;
-                }
+            for (Ingredient ingredient : ingredientList2) {
+                if (ingredientList.get(i) != null && ingredient != null)
+                    if (ingredientList.get(i).getName().equals(ingredient.getName())) {
+                        ingredientList.set(i, ingredient);
+                        break;
+                    }
             }
         }
+        //https://www.baeldung.com/java-remove-duplicates-from-list
+        ingredientList = new ArrayList<>(new HashSet<>(ingredientList));
         return ingredientList;
     }
 
@@ -131,9 +136,11 @@ public class Ingredient extends BaseModel {
     }
 
     public void update(Ingredient ingredient){
-        this.name = ingredient.getName();
-        this.description = ingredient.getDescription();
-        this.price = ingredient.getPrice();
-        this.coin = ingredient.getCoin();
+        if (ingredient!=null) {
+            this.name = ingredient.getName();
+            this.description = ingredient.getDescription();
+            this.price = ingredient.getPrice();
+            this.coin = ingredient.getCoin();
+        }
     }
 }

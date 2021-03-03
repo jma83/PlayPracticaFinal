@@ -79,15 +79,15 @@ public class RecipeBook extends BaseModel{
     }
 
     public void update(RecipeBook rb){
-        if (rb.getName() != null)
-        this.name = rb.getName();
-        if (rb.getReview() != null)
-        this.review = rb.getReview();
+        if (rb!=null) {
+            this.name = rb.getName();
+            this.review = rb.getReview();
+        }
     }
 
     public void reset(){
-        this.name = "";
-        this.review = "";
+        this.name = this.author + "'s recipe book";
+        this.review = "My recipe book";
         this.recipeList = new ArrayList<>();
     }
 }

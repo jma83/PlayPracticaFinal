@@ -34,7 +34,7 @@ public class DateUtils {
             Date ts = dateFormat.parse(date);
             return ts;
         } catch (ParseException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
         return null;
     }

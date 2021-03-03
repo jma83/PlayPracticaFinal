@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.ebean.Finder;
 import utils.DateUtils;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToOne;
 import java.time.LocalDateTime;
@@ -25,8 +26,10 @@ public class UserToken extends BaseModel{
 
     @OneToOne(mappedBy="userToken")
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Column(updatable=false)
     String token;
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Column(updatable=false)
     Boolean visible = false;
 
     public UserToken(){

@@ -8,6 +8,7 @@ import validators.Name;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 @Entity
@@ -31,13 +32,16 @@ public class Tag extends BaseModel {
         List<Tag> tagList2 = find.query().where().in("tagName", listNames).findList();
 
         for (int i = 0; i< tagList.size();i++) {
-            for (int j = 0; j< tagList2.size();j++) {
-                if (tagList.get(i).getTagName().equals(tagList2.get(j).getTagName())){
-                    tagList.set(i,tagList2.get(j));
-                    break;
-                }
+            for (Tag tag : tagList2) {
+                if (tagList.get(i) != null && tag != null)
+                    if (tagList.get(i).getTagName().equals(tag.getTagName())) {
+                        tagList.set(i, tag);
+                        break;
+                    }
             }
         }
+        //https://www.baeldung.com/java-remove-duplicates-from-list
+        tagList = new ArrayList<>(new HashSet<>(tagList));
         return tagList;
 
     }

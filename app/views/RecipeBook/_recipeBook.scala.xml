@@ -4,6 +4,8 @@
     <id>@recipeBook.getId()</id>
     <name>@recipeBook.getName()</name>
     <review>@recipeBook.getReview()</review>
+    <whenCreated>@recipeBook.getWhenCreated()</whenCreated>
+    <whenUpdated>@recipeBook.getWhenUpdated()</whenUpdated>
     @views.xml.Recipe.recipes(recipeBook.getRecipeList())
     <author>@views.xml.User._user(recipeBook.getAuthor())</author>
 </recipeBook>

@@ -34,4 +34,8 @@ public class MessageUtils {
 
     public static final String deleteOk = "ok.deleteOk";
 
+    public static final String success = "success";
+    public static final String message = "message";
+    public static final String self = "self";
+
 }

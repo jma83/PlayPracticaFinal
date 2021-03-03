@@ -21,7 +21,6 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.validation.Valid;
-import java.text.SimpleDateFormat;
 
 @Entity
 public class Recipe extends BaseModel {

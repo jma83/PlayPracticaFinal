@@ -24,8 +24,8 @@ public class RecipeSearch {
 
     public RecipeSearch(Http.Request request){
         name = request.queryString("name");
-        dateLower = request.queryString("greaterDate");
-        dateGreater = request.queryString("lesserDate");
+        dateGreater = request.queryString("greaterDate");
+        dateLower = request.queryString("lesserDate");
         description = request.queryString("description");
         recipeTag = request.queryString("tag");
         ingredientId = request.queryString("ingredientId");
@@ -58,6 +58,17 @@ public class RecipeSearch {
         }
 
         return null;
+    }
+
+    public Long convertToLong(String res){
+        if (res != null) {
+            try {
+                return Long.valueOf(res);
+            } catch (Exception e) {
+                System.err.println("Error! " + e.getMessage());
+            }
+        }
+        return -1L;
     }
 
     public String getName() {
@@ -120,17 +131,5 @@ public class RecipeSearch {
 
     public String getVegan() {
         return vegan.orElse(null);
-    }
-
-    public Long convertToLong(String res){
-        if (res != null) {
-            try {
-                return Long.valueOf(res);
-            } catch (Exception e) {
-                System.err.println("Error! " + e.getMessage());
-            }
-        }
-
-        return -1L;
     }
 }

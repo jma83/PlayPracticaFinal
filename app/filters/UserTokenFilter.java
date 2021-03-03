@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.PropertyWriter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
-import models.BaseModel;
 import models.User;
 import utils.DateUtils;
 
@@ -30,12 +29,7 @@ public class UserTokenFilter extends SimpleBeanPropertyFilter {
                 writer.serializeAsField(pojo, jgen, provider);
                 return;
             }
-            if (!writer.getName().equals("birthdate")) {
-                Date dateU = ((User) pojo).getBirthdate();
-                ((User) pojo).setBirthdate(DateUtils.convertTimestamp(dateU));
-                writer.serializeAsField(pojo, jgen, provider);
-                return;
-            }
+
             Boolean visible = ((User) pojo).getUserToken().getVisible();
             if (visible) {
                 writer.serializeAsField(pojo, jgen, provider);

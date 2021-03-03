@@ -6,4 +6,6 @@
     <description>@ingredient.getDescription()</description>
     <price>@ingredient.getPrice()</price>
     <coin>@ingredient.getCoin()</coin>
+    <whenCreated>@ingredient.getWhenCreated()</whenCreated>
+    <whenUpdated>@ingredient.getWhenUpdated()</whenUpdated>
 </ingredient>

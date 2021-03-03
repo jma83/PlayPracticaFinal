@@ -4,6 +4,7 @@ import actionCompostionAuth.Attrs;
 import actionCompostionAuth.UserArg;
 import actionCompostionAuth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
+import controllers.src.XMLManager;
 import models.BaseModel;
 import models.User;
 import org.w3c.dom.Document;
@@ -19,7 +20,6 @@ import java.util.*;
 
 public class UserController extends BaseController {
     String headerCount = "X-User-Count";
-
     public UserController() {
         super();
     }
@@ -32,21 +32,22 @@ public class UserController extends BaseController {
         Form<User> form = formFactory.form(User.class);
         form = validateRequestForm(request,form);
         Result res = checkFormErrors(request,form);
-
         if (res == null) {
-            User u = form.get();
-            u.init();
-            int count = User.findUsername(u.getUsername()).size();
-            if (saveModel(u, count)) {
-                u.getUserToken().setVisible(true);
-                res = contentNegotiation(request, this,false);
+            User u = (User) getFormModel(form);
+            if (u!=null) {
+                u.init();
+                int count = User.findUsername(u.getUsername()).size();
+                if (saveModel(u, count)) {
+                    u.getUserToken().setVisible(true);
+                    res = contentNegotiation(request, this, false);
+                }else {
+                    res = contentNegotiationError(request, getMessage(MessageUtils.duplicatedError), 406);
+                }
             }
-            if (res == null)
-                res = contentNegotiationError(request, getMessage(MessageUtils.duplicatedError), 406);
-
         }
+        if (res == null)
+            res = contentNegotiationError(request, getMessage(MessageUtils.formatError), 400);
 
-        assert res != null;
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
 
@@ -82,14 +83,19 @@ public class UserController extends BaseController {
 
         if (res == null) {
             User userRequest = request.attrs().get(Attrs.USER);
-            User userUpdate = User.findById(checkUserId(userRequest,id,0));
+            User userUpdate = User.findById(checkUserId(userRequest, id, 0));
             if (userUpdate != null) {
-                userUpdate.update(form.get());
-                int count = User.findUsernameId(userUpdate.getUsername(), userUpdate.getId()).size();
-                res = saveModelResult(request,this,userUpdate, count,true);
+                if (userRequest.getId().equals(userUpdate.getId())) {
+                    userUpdate.update((User) getFormModel(form));
+                    int count = User.findUsernameId(userUpdate.getUsername(), userUpdate.getId()).size();
+                    res = saveModelResult(request, this, userUpdate, count, true);
+                }
+                if (res == null)
+                    res = contentNegotiationError(request, getMessage(MessageUtils.forbiddenError), 403);
             }
             if (res == null)
-                res = contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
+                res = contentNegotiationError(request, getMessage(MessageUtils.notFound), 404);
+
         }
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
@@ -99,12 +105,20 @@ public class UserController extends BaseController {
     @UserArg
     public Result deleteUser(Http.Request request, String id){
         initRequest(request);
-        User userRequest = request.attrs().get(Attrs.USER);
-        User usuFinal = User.findById(checkSelfId(userRequest,id,0));
         Result res = null;
-        if (usuFinal!=null) res = deleteModelResult(request,this,usuFinal);
+        User userRequest = request.attrs().get(Attrs.USER);
+        User usuFinal = User.findById(checkUserId(userRequest,id,0));
 
-        if (res == null) res = contentNegotiationError(request,getMessage(MessageUtils.forbiddenError),403);
+        if (usuFinal != null) {
+            if (userRequest.getId().equals(usuFinal.getId()))
+                res = deleteModelResult(request, this, usuFinal);
+
+            if (res == null)
+                res = contentNegotiationError(request,getMessage(MessageUtils.forbiddenError),403);
+        }
+
+        if (res == null)
+            res = contentNegotiationError(request, getMessage(MessageUtils.notFound), 404);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -116,8 +130,10 @@ public class UserController extends BaseController {
 
         if (doc != null){
             NodeList modelNode = doc.getElementsByTagName(user.getTitleXML());
-            User u = (User) this.xmlManager.createWithXML(modelNode,user).get(0);
+            User u = (User) XMLManager.createWithXML(modelNode,user).get(0);
+            if (u!=null)
             form.fill(u);
+            auxModel = u;
         }else if (json != null){
             form = form.bindFromRequest(request);
         }else{

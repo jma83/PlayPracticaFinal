@@ -4,6 +4,7 @@ import actionCompostionAuth.Attrs;
 import actionCompostionAuth.UserArg;
 import actionCompostionAuth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
+import controllers.src.XMLManager;
 import models.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -42,15 +43,19 @@ public class RecipeController extends BaseController {
         Form<Recipe> form = formFactory.form(Recipe.class);
         form = validateRequestForm(request,form);
         Result res = checkFormErrors(request,form);
+        int count = 0;
 
         if (res == null) {
-            Recipe r = form.get();
-            User user = request.attrs().get(Attrs.USER);
-            r.setAuthor(user);
-            r.setIngredientList(Ingredient.findAndMergeIngredientList(r.getIngredientList()));
-            r.setTagList(Tag.findAndMergeTagList(r.getTagList()));
-            int count = Recipe.findByNameAndUser(r.getName(),user,r.getId()).size();
-            res = saveModelResult(request,this,r,count,false);
+            Recipe r = (Recipe) getFormModel(form);
+            if (r != null) {
+                User user = request.attrs().get(Attrs.USER);
+                r.setAuthor(user);
+                r.setIngredientList(Ingredient.findAndMergeIngredientList(r.getIngredientList()));
+                r.setTagList(Tag.findAndMergeTagList(r.getTagList()));
+                count = Recipe.findByNameAndUser(r.getName(), user, r.getId()).size();
+            }
+            res = saveModelResult(request, this, r, count, false);
+
         }
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
@@ -92,7 +97,7 @@ public class RecipeController extends BaseController {
 
         if (res == null) {
             Recipe recipeUpdate = Recipe.findById(id);
-            Recipe recipeRequest = form.get();
+            Recipe recipeRequest = (Recipe) getFormModel(form);
             if (recipeUpdate != null && recipeRequest != null) {
                 recipeUpdate.update(recipeRequest);
                 recipeUpdate.setIngredientList(Ingredient.findAndMergeIngredientList(recipeUpdate.getIngredientList()));
@@ -135,7 +140,7 @@ public class RecipeController extends BaseController {
 
         if (res == null) {
             Recipe recipe = Recipe.findById(id);
-            Ingredient ingredient = form.get();
+            Ingredient ingredient = (Ingredient) getFormModel(form);
             if (recipe != null && ingredient != null) {
                 List<Ingredient> ingredients = new ArrayList<>();
                 ingredients.add(ingredient);
@@ -232,8 +237,10 @@ public class RecipeController extends BaseController {
 
         if (doc != null){
             NodeList modelNode = doc.getElementsByTagName(recipe.getTitleXML());
-            Recipe r = (Recipe) this.xmlManager.createWithXML(modelNode,recipe).get(0);
+            Recipe r = (Recipe) XMLManager.createWithXML(modelNode,recipe).get(0);
+            if (r!=null)
             form.fill(r);
+            auxModel = r;
         }else if (json != null){
             form = form.bindFromRequest(request);
         }else{

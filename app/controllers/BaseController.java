@@ -1,10 +1,9 @@
 package controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
+import controllers.src.JSONManager;
 import filters.UserTokenFilter;
 import models.*;
 import play.data.Form;
@@ -17,7 +16,6 @@ import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
 import play.twirl.api.Content;
-import controllers.src.XMLManager;
 import utils.MessageUtils;
 
 import javax.inject.Inject;
@@ -29,14 +27,15 @@ public class BaseController extends Controller {
     @Inject
     FormFactory formFactory;
     List<BaseModel> modelList = new ArrayList<>();
+    BaseModel auxModel = null;
+
     final String langHeader = "Accept-Language";
     final String XML_SCHEMA = "application/xml";
     final String JSON_SCHEMA = "application/json";
-
     FilterProvider filters = new SimpleFilterProvider().addFilter("userTokenFilter", new UserTokenFilter());
-    XMLManager xmlManager = new XMLManager();
     private final MessagesApi messagesApi;
     String lang;
+
     public BaseController(){
         this.messagesApi=null;
     }
@@ -61,11 +60,11 @@ public class BaseController extends Controller {
             //https://grokonez.com/json/resolve-json-infinite-recursion-problems-working-jackson
             try {
                 if (modelList != null && modelList.size() > 0) {
-                    res = Results.ok(Json.parse(getResultJson()));
+                    res = Results.ok(Json.parse(JSONManager.getResultJson(filters,modelList)));
                 }else if (delete){
-                    res = genericJsonResponse(true, getMessage(MessageUtils.deleteOk), 200);
+                    res = JSONManager.genericJsonResponse(true, getMessage(MessageUtils.deleteOk), 200);
                 }else{
-                    res = genericJsonResponse(true, getMessage(MessageUtils.noResults), 200);
+                    res = JSONManager.genericJsonResponse(true, getMessage(MessageUtils.noResults), 200);
                 }
             } catch (JsonProcessingException e) {
                 System.err.println("Error: " + e.getMessage());
@@ -81,19 +80,17 @@ public class BaseController extends Controller {
 
     public Result contentNegotiationError(Http.Request request, String errorMsg, Integer status){
         Result res;
-        boolean b = false;
 
         if (request.accepts(XML_SCHEMA)){
-            Content content = views.xml.Generic.generic.render(b,errorMsg);
+            Content content = views.xml.Generic.generic.render(false,errorMsg);
             res = Results.status(status,content);
         }else if (request.accepts(JSON_SCHEMA)) {
-            res = genericJsonResponse(b, errorMsg, status);
+            res = JSONManager.genericJsonResponse(false, errorMsg, status);
         }else{
             res = Results.status(status,errorMsg);
         }
 
         return res;
-
     }
 
     public Result checkFormErrors(Http.Request request,Form<? extends BaseModel> form){
@@ -101,9 +98,8 @@ public class BaseController extends Controller {
             return contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
 
         if (form.hasErrors()){
-            System.err.println(form.errorsAsJson());
-            System.err.println(form.errors());
-            return contentNegotiationError(request,Json.stringify(form.errorsAsJson()),400);
+            String str = JSONManager.formatJsonError(form.errorsAsJson());
+            return contentNegotiationError(request,str,400);
         }
         return null;
     }
@@ -137,10 +133,12 @@ public class BaseController extends Controller {
     public Result saveModelResult(Http.Request request, BaseController baseController, Object modelType, int count, boolean update) {
         Result res = null;
         if (count == 0) {
-            if (update && updateModel(modelType, count)){
-                res = contentNegotiation(request, baseController,false);
-            }else if (!update && saveModel(modelType, count)){
-                res = contentNegotiation(request, baseController,false);
+            if (modelType!= null) {
+                if (update && updateModel(modelType, count)) {
+                    res = contentNegotiation(request, baseController, false);
+                } else if (!update && saveModel(modelType, count)) {
+                    res = contentNegotiation(request, baseController, false);
+                }
             }
 
             if (res == null)
@@ -215,7 +213,7 @@ public class BaseController extends Controller {
     }
 
     public Long checkSelfId(User u, String id, Integer type){
-        String self = "self";
+        String self = MessageUtils.self;
         if (u!=null && id !=null && type!=null)  {
             if (type == 1) {
                 if (self.equals(id) || id.equals(Long.toString(u.getRecipeBook().getId()))) {
@@ -230,23 +228,13 @@ public class BaseController extends Controller {
         return -1L;
     }
 
+    public BaseModel getFormModel(Form<? extends BaseModel> form){
 
-    public Result genericJsonResponse(Boolean success, String errorMsg, Integer status){
+        if (form.value().isPresent())
+        return form.get();
 
-        ObjectNode objectNode = Json.newObject();
-        objectNode.put("success", success);
-        objectNode.put("message", errorMsg);
-        return Results.status(status,objectNode);
+        return auxModel;
 
-    }
-
-    public Content getContentXML(List<BaseModel> modelList){
-        return null;
-    }
-
-    public String getResultJson() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writer(filters).writeValueAsString(modelList);
     }
 
     public void initRequest(Http.Request request){
@@ -256,6 +244,11 @@ public class BaseController extends Controller {
     }
 
     public String getMessage(String message){
+        assert this.messagesApi != null;
         return this.messagesApi.get(Lang.apply(lang),message);
+    }
+
+    public Content getContentXML(List<BaseModel> modelList){
+        return null;
     }
 }

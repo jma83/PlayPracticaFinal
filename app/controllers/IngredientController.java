@@ -2,6 +2,7 @@ package controllers;
 
 import actionCompostionAuth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
+import controllers.src.XMLManager;
 import models.BaseModel;
 import models.Ingredient;
 import org.w3c.dom.Document;
@@ -35,11 +36,15 @@ public class IngredientController extends BaseController {
         Form<Ingredient> form = formFactory.form(Ingredient.class);
         form = validateRequestForm(request,form);
         Result res = checkFormErrors(request,form);
+        int count = 0;
 
         if (res == null) {
-            Ingredient i = form.get();
-            List<Ingredient> list = Ingredient.findByName(i.getName());
-            res = saveModelResult(request,this,i,list.size(),false);
+            Ingredient i = (Ingredient) getFormModel(form);
+            if (i!=null) {
+                List<Ingredient> list = Ingredient.findByName(i.getName());
+                count = list.size();
+            }
+            res = saveModelResult(request,this,i,count,false);
         }
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
@@ -75,7 +80,7 @@ public class IngredientController extends BaseController {
 
         if (res == null) {
             Ingredient ingredientUpdate = Ingredient.findById(id);
-            Ingredient ingredientRequest = form.get();
+            Ingredient ingredientRequest = (Ingredient) getFormModel(form);
             if (ingredientUpdate != null && ingredientRequest != null) {
                 ingredientUpdate.update(ingredientRequest);
                 int count = Ingredient.findByName(ingredientUpdate.getName()).size();
@@ -105,7 +110,10 @@ public class IngredientController extends BaseController {
 
         if (doc != null){
             NodeList modelNode = doc.getElementsByTagName(ingredient.getTitleXML());
-            form.fill((Ingredient) this.xmlManager.createWithXML(modelNode,ingredient).get(0));
+            Ingredient i = (Ingredient) XMLManager.createWithXML(modelNode,ingredient).get(0);
+            if (i!=null)
+            form.fill(i);
+            auxModel = i;
         }else if (json != null){
             form = form.bindFromRequest(request);
         }else{

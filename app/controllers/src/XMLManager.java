@@ -21,7 +21,7 @@ public class XMLManager {
         super();
     }
 
-    public List<BaseModel> createWithXML(NodeList modelNode, Object instance){
+    public static List<BaseModel> createWithXML(NodeList modelNode, Object instance){
         List<BaseModel> models = new ArrayList<>();
         //Fuente: https://stackoverflow.com/questions/15315368/java-reflection-get-all-private-fields
         Field[] allFields = instance.getClass().getDeclaredFields();
@@ -57,14 +57,15 @@ public class XMLManager {
             if (instance1!=null)
                 models.add((BaseModel) instance1);
         }
-
+        if (models.size()==0)
+            models.add(null);
         return models;
     }
 
 
 
     //Fuente: https://java2blog.com/invoke-getters-setters-using-reflection-java/
-    public void invokeSetter(Object obj,String propertyName, Object variableValue){
+    public static void invokeSetter(Object obj,String propertyName, Object variableValue){
         try {
             propertyName = propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
             Method method = obj.getClass().getDeclaredMethod("set"+propertyName,variableValue.getClass());
@@ -79,7 +80,7 @@ public class XMLManager {
 
     }
 
-    public Object castObject(String value, Field f) {
+    public static Object castObject(String value, Field f) {
         Object finalObj = value;
         if (f.getType() == Integer.class){
             finalObj = Integer.parseInt(value);
@@ -102,7 +103,9 @@ public class XMLManager {
         return finalObj;
     }
 
-    public String getTextNode(Element e) {
+    public static String getTextNode(Element e) {
+        if (e.getChildNodes().item(0)!=null)
         return e.getChildNodes().item(0).getNodeValue();
+        return "";
     }
 }

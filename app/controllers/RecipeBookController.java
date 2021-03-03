@@ -4,6 +4,7 @@ import actionCompostionAuth.Attrs;
 import actionCompostionAuth.UserArg;
 import actionCompostionAuth.UserAuthenticator;
 import com.fasterxml.jackson.databind.JsonNode;
+import controllers.src.XMLManager;
 import models.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -62,14 +63,19 @@ public class RecipeBookController extends BaseController {
 
         if (res == null) {
             User user = request.attrs().get(Attrs.USER);
-            RecipeBook recipeBookUpdate = RecipeBook.findById(checkSelfId(user,id,1));
-            RecipeBook recipeBookRequest = form.get();
-            if (recipeBookUpdate != null && recipeBookRequest != null) {
-                recipeBookUpdate.update(recipeBookRequest);
-                res = saveModelResult(request,this,recipeBookUpdate,0,true);
+            RecipeBook recipeBookUpdate = RecipeBook.findById(checkUserId(user,id,1));
+            RecipeBook recipeBookRequest = (RecipeBook) getFormModel(form);
+            if (recipeBookUpdate != null) {
+                if (recipeBookRequest != null && recipeBookUpdate.getId().equals(user.getRecipeBook().getId())) {
+                    recipeBookUpdate.update(recipeBookRequest);
+                    res = saveModelResult(request, this, recipeBookUpdate, 0, true);
+                }
+                if (res == null)
+                    res = contentNegotiationError(request,getMessage(MessageUtils.forbiddenError),403);
             }
             if (res == null)
-                res = contentNegotiationError(request,getMessage(MessageUtils.forbiddenError),403);
+                res = contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
+
         }
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
@@ -81,14 +87,18 @@ public class RecipeBookController extends BaseController {
         initRequest(request);
         Result res = null;
         User user = request.attrs().get(Attrs.USER);
-        RecipeBook recFinal = RecipeBook.findById(checkSelfId(user,id,1));
+        RecipeBook recFinal = RecipeBook.findById(checkUserId(user,id,1));
         if (recFinal != null) {
-            recFinal.reset();
-            res = saveModelResult(request,this,recFinal,0,true);
+            if (checkSelfId(user,id,1)!=-1L) {
+                recFinal.reset();
+                res = saveModelResult(request, this, recFinal, 0, true);
+            }else {
+                res = contentNegotiationError(request, getMessage(MessageUtils.forbiddenError), 403);
+            }
         }
 
         if (res == null)
-            res = contentNegotiationError(request,getMessage(MessageUtils.forbiddenError),403);
+            res = contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
@@ -111,6 +121,8 @@ public class RecipeBookController extends BaseController {
                     rb.getRecipeList().add(recipe);
                     res = saveModelResult(request,this,rb,0,true);
                 }
+            }else{
+                res = contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
             }
         }
 
@@ -134,7 +146,7 @@ public class RecipeBookController extends BaseController {
             form = recipeController.validateRequestForm(request, form);
             res = checkFormErrors(request, form);
             if (res == null) {
-                Recipe recipe = form.get();
+                Recipe recipe = (Recipe) getFormModel(form);
                 RecipeBook rb = user.getRecipeBook();
                 if (rb != null && recipe != null) {
                     recipe.setIngredientList(Ingredient.findAndMergeIngredientList(recipe.getIngredientList()));
@@ -211,8 +223,10 @@ public class RecipeBookController extends BaseController {
 
         if (doc != null){
             NodeList modelNode = doc.getElementsByTagName(recipeBook.getTitleXML());
-            RecipeBook r = (RecipeBook) this.xmlManager.createWithXML(modelNode,recipeBook).get(0);
+            RecipeBook r = (RecipeBook) XMLManager.createWithXML(modelNode,recipeBook).get(0);
+            if (r!=null)
             form.fill(r);
+            auxModel = r;
         }else if (json != null){
             form = form.bindFromRequest(request);
         }else{
