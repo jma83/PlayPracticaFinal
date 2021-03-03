@@ -24,7 +24,6 @@ public class BirthdateValidator extends Constraints.Validator<Date> implements C
     public boolean isValid(Date object, javax.validation.ConstraintValidatorContext constraintContext) {
 
         if (object==null || "".equals(object)) {
-            System.err.println(object);
             constraintContext.disableDefaultConstraintViolation();
             constraintContext.buildConstraintViolationWithTemplate(MessageUtils.birthdateNull).addConstraintViolation();
             return false;

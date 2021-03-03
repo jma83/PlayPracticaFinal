@@ -112,23 +112,22 @@ public class RecipeBookController extends BaseController {
         Result res = null;
 
         User user = request.attrs().get(Attrs.USER);
-        if (checkSelfId(user, id,1) != -1L){
-            Recipe recipe = Recipe.findById(id2);
-            RecipeBook rb = user.getRecipeBook();
-
-            if (recipe != null && rb != null) {
-                if (RecipeBook.findByRecipe(rb.getId(), recipe) == null) {
-                    rb.getRecipeList().add(recipe);
-                    res = saveModelResult(request,this,rb,0,true);
+        Recipe recipe = Recipe.findById(id2);
+        if (recipe != null) {
+            if (checkSelfId(user, id, 1) != -1L) {
+                RecipeBook rb = user.getRecipeBook();
+                if (rb != null) {
+                    if (RecipeBook.findByRecipe(rb.getId(), recipe) == null) {
+                        rb.getRecipeList().add(recipe);
+                        res = saveModelResult(request, this, rb, 0, true);
+                    }
                 }
-            }else{
-                res = contentNegotiationError(request,getMessage(MessageUtils.notFound),404);
             }
+            if (res == null)
+                res = contentNegotiationError(request,getMessage(MessageUtils.forbiddenError),403);
         }
-
         if (res == null)
-            res = contentNegotiationError(request,getMessage(MessageUtils.forbiddenError),403);
-
+            res = contentNegotiationError(request, getMessage(MessageUtils.notFound), 404);
 
         return res.withHeader(headerCount,String.valueOf(modelList.size()));
     }
